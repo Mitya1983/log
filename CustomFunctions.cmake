@@ -82,7 +82,7 @@ function(target_link_external_lib TARGET EXTERNAL_LIBS_FOLDER LIB_NAME LIB_BRANC
         file(MAKE_DIRECTORY ${EXTERNAL_LIBS_FOLDER})
     endif(NOT EXISTS ${EXTERNAL_LIBS_FOLDER})
 
-    if(NOT EXISTS ${EXTERNAL_LIBS_FOLDER}/${LIB_NAME})
+    if(NOT EXISTS ${EXTERNAL_LIBS_FOLDER}/${LIB_NAME}/${CMAKE_BUILD_TYPE})
         MESSAGE(STATUS "Downloading ${LIB_NAME}")
         file(MAKE_DIRECTORY ${EXTERNAL_LIBS_FOLDER}/sources_${LIB_NAME})
         file(DOWNLOAD https://github.com/Mitya1983/${LIB_NAME}/archive/${LIB_BRANCH}.zip
@@ -117,7 +117,7 @@ function(target_link_external_lib TARGET EXTERNAL_LIBS_FOLDER LIB_NAME LIB_BRANC
                 WORKING_DIRECTORY ${EXTERNAL_LIBS_FOLDER}
                 COMMAND rm -r sources_${LIB_NAME}
         )
-    endif(NOT EXISTS ${EXTERNAL_LIBS_FOLDER}/${LIB_NAME})
+    endif(NOT EXISTS ${EXTERNAL_LIBS_FOLDER}/${LIB_NAME}/${CMAKE_BUILD_TYPE})
 
     target_include_directories(${TARGET} PUBLIC
             ${EXTERNAL_LIBS_FOLDER}/${LIB_NAME}/${CMAKE_BUILD_TYPE}/inc
