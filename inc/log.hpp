@@ -383,7 +383,7 @@ namespace tristan::log{
 #define WriteTrace(message) tristan::log::Log::write(message, tristan::log::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
-#if defined(LOG_DIABLE_DEBUG)
+#if defined(LOG_DISABLE_DEBUG)
 #define WriteDebug(message)
 #else
     /**
@@ -391,10 +391,10 @@ namespace tristan::log{
      * \brief Convenience macro to output Debug message.
      * \param message const std::string&
      */
-#define FLDebug(message) tristan::log::Log::write(message, tristan::log::MessageType::Debug, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteDebug(message) tristan::log::Log::write(message, tristan::log::MessageType::Debug, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
-#if defined(LOG_DIABLE_ERROR)
+#if defined(LOG_DISABLE_ERROR)
 #define WriteError(message)
 #else
     /**
@@ -405,7 +405,7 @@ namespace tristan::log{
 #define WriteError(message) tristan::log::Log::write(message, tristan::log::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
-#if defined(LOG_DIABLE_WARNING)
+#if defined(LOG_DISABLE_WARNING)
 #define WriteWarning(message)
 #else
     /**
@@ -416,7 +416,7 @@ namespace tristan::log{
 #define WriteWarning(message) tristan::log::Log::write(message, tristan::log::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
-#if defined(LOG_DIABLE_INFO)
+#if defined(LOG_DISABLE_INFO)
 #define WriteInfo(message)
 #else
     /**
@@ -427,7 +427,7 @@ namespace tristan::log{
 #define WriteInfo(message) tristan::log::Log::write(message, tristan::log::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
-#if defined(LOG_DIABLE_FATAL)
+#if defined(LOG_DISABLE_FATAL)
 #define WriteFatal(message)
 #else
     /**

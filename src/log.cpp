@@ -1,6 +1,5 @@
 #include "log.hpp"
 
-#define __STDC_WANT_LIB_EXT1__ 1
 
 #include <fstream>
 #include <iostream>
@@ -14,8 +13,6 @@
 using namespace tristan::log;
 
 namespace{
-
-    auto getStringTime(std::chrono::time_point<std::chrono::system_clock> time_point) -> std::string;
 
     /**
      * \private
@@ -230,30 +227,6 @@ auto Log::instance() -> Log&{
 
 namespace{
 
-    auto getStringTime(std::chrono::time_point<std::chrono::system_clock> time_point) -> std::string{
-
-        tm tm_time{ };
-        std::time_t time = std::chrono::system_clock::to_time_t(time_point);
-        localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
-        std::string string_time;
-        if (tm_time.tm_hour < 10){
-            string_time += '0';
-        }
-        string_time = std::to_string(tm_time.tm_hour);
-        string_time += ':';
-        if (tm_time.tm_min < 10){
-            string_time += '0';
-        }
-        string_time += std::to_string(tm_time.tm_min);
-        string_time += ':';
-        if (tm_time.tm_sec < 10){
-            string_time += '0';
-        }
-        string_time += std::to_string(tm_time.tm_sec);
-
-        return string_time;
-    }
-
     auto traceFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name, const std::string& file_name, int line
     ) -> std::string{
         std::stringstream output;
@@ -264,7 +237,11 @@ namespace{
     auto debugFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name, const std::string& file_name, int line
     ) -> std::string{
         std::stringstream output;
-        output << getStringTime(time_point) << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function " << function_name << " of file " << file_name << " at line " << line;
+        tm tm_time{ };
+        std::time_t time = std::chrono::system_clock::to_time_t(time_point);
+        localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
+        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function " << function_name << " of file " << file_name
+               << " at line " << line;
         return output.str();
     }
 
@@ -280,9 +257,11 @@ namespace{
 
     auto infoFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name, const std::string& file_name, int line
     ) -> std::string{
-
         std::stringstream output;
-        output << getStringTime(time_point) << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message;
+        tm tm_time{ };
+        std::time_t time = std::chrono::system_clock::to_time_t(time_point);
+        localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
+        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message;
         return output.str();
     }
 
