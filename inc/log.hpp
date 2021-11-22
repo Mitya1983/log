@@ -16,7 +16,7 @@
 
 namespace tristan::log{
     
-    /**
+   /**
      * \enum MessageType
      * \brief List of supported message types
      */
@@ -36,53 +36,76 @@ namespace tristan::log{
      *
      * The following customizations are possible:
      * \par Output
-     * \nOutput may be set globally, that is for all message types, or for each message type separately using the setGlobalOutput and setOutput sets of functions respectively. Output may be one of
+     * \n Output may be set globally, that is for all message types, or for each message type separately using the setGlobalOutput and setOutput sets of functions respectively. Output may be one of
      * the following:
-     * \format std::ostream*
-     * \format const std::filesystem::path&
-     * \format std::function\<void(const std::string&)\>
-     * \format std::shared_ptr<Class> and a pointer to a member function which accepts const std::string& as a parameter. This should be considered as preferable way of using member functions since
-     * the validity of std::shared_prt is checked before function invocation.
-     * \format Pointer to an object and a pointer to a member function which accepts const std::string& as a parameter \note This function should be used with caution as the validity of pointer is
+     * \li std::ostream*
+     * \li const std::filesystem::path&
+     * \li std::function\<void(const std::string&)\>
+     * \li std::weak_ptr<Class> and a pointer to a member function which accepts const std::string& as a parameter. This should be considered as preferable way of using member functions since
+     * the validity of std::weak_prt is checked before function invocation.
+     * \li Pointer to an object and a pointer to a member function which accepts const std::string& as a parameter. This function should be used with caution as the validity of pointer is
      * not checked before function invocation.
-     * \attention Log write function is thread safe when output is set either to std::ostream or to std::filesystem::path and not thread safe in case of user defined callbacks. That is it is a user
-     * obligation to handle multithreaded calls of provided callback function.
-     * \nOutput may be limited by log level using the following preprocessor directives:
-     * \format LOG_DISABLE_TRACE
-     * \format LOG_DISABLE_DEBUG
-     * \format LOG_DISABLE_ERROR
-     * \format LOG_DISABLE_WARNING
-     * \format LOG_DISABLE_INFO
-     * \format LOG_DISABLE_FATAL
-     * \nAdditionally output may be disabled for any of message types on runtime by passing the [nullptr] value to setOutput function.
+     *
+     * \n Output may be disabled for each message type using the following self explanatory preprocessor directives:
+     * \li LOG_DISABLE_TRACE
+     * \li LOG_DISABLE_DEBUG
+     * \li LOG_DISABLE_ERROR
+     * \li LOG_DISABLE_WARNING
+     * \li LOG_DISABLE_INFO
+     * \li LOG_DISABLE_FATAL
+     *
+     * \n Additionally output may be disabled for any of message types on runtime by passing the [nullptr] value to setOutput function.
      * \par Formatting
-     * \nDefault formatting is set to the following:
-     * \format Trace -   hh:mm:ss:sss:sss | TRACE | [message] | [function_name]
-     * \format Debug -   hh:mm:ss | DEBUG | [message] in [function_name] of [file_name] at line [line]
-     * \format Error -   hh:mm:ss | ERROR | [message]
-     * \format Warning - hh:mm:ss | TRACE | [message]
-     * \format Info -    hh:mm:ss | TRACE | [message]
-     * \format Fatal -   hh:mm:ss | TRACE | [message] in [function_name] of [file_name] at line [line]
-     * \nUser may provide custom formatting function which may be set globally, that is for all message types, or for each message type separately using the setGlobalOutput and setOutput sets of
-     * functions respectively. Output may be one of
-     * the following:
-     * \format std::function\<std::string(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)\>
-     * \format std::shared_ptr\<Class\> and a pointer to a member function which accepts const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const
+     * \n Default formatting is set to the following:
+     * \li Trace   - time_since_epoch | TRACE | [function_name] | [message]
+     * \li Debug   - hh:mm:ss | DEBUG | [message] in [function_name] of [file_name] at line [line]
+     * \li Error   - hh:mm:ss | ERROR | [message]
+     * \li Warning - hh:mm:ss | WARNING | [message]
+     * \li Info    - hh:mm:ss | INFO | [message]
+     * \li Fatal   - hh:mm:ss | FATAL | [message] in [function_name] of [file_name] at line [line]
+     *
+     * \n User may provide custom formatting function which may be set globally, that is for all message types, or for each message type separately using the setGlobalFormatter and setFormatter
+     * sets of functions respectively. Formatter may be one of the following:
+     * \li std::function\<std::string(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)\>
+     * \li std::weak_ptr\<Class\> and a pointer to a member function which accepts const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const
      * std::string&, const std::string& and int as parameters. This should be considered as preferable way of using member functions since the validity of std::shared_prt is checked before function
      * invocation.
-     * \format Pointer to an object and a pointer to a member function which accepts const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const
-     * std::string&, const std::string& and int as parameters. \note This function should be used with caution as the validity of pointer is not checked before function invocation.
+     * \li Pointer to an object and a pointer to a member function which accepts const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const
+     * std::string&, const std::string& and int as parameters. This function should be used with caution as the validity of pointer is not checked before function invocation.
+     *
+     * \attention Write function is thread safe when output is set either to std::ostream or to std::filesystem::path and not thread safe in case of user defined callbacks. That is it is a user
+     * obligation to handle multithreaded calls of provided callback function.
      */
     class Log{
     public:
+        /**
+         * \private
+         */
         Log(const Log&) = delete;
+        /**
+        * \private
+        */
         Log(Log&&) = delete;
-        //OPERATORS
+        /**
+        * \private
+        */
         Log& operator=(const Log&) = delete;
+        /**
+        * \private
+        */
         Log& operator=(Log&&) = delete;
         
         /**
-         * \brief Sets the string which will be sent to output.
+         * \brief Sets the string representation of MessageType.
+         *
+         * Default values are as follows:
+         * \li TRACE
+         * \li DEBUG
+         * \li ERROR
+         * \li WARNING
+         * \li INFO
+         * \li FATAL
+         *
          * \param message_type MessageType
          * \param value const std::string&
          */
@@ -134,12 +157,12 @@ namespace tristan::log{
          * \param output_stream std::ostream*
          */
         static void setOutput(MessageType message_type, std::ostream* output_stream);
-    
+        
         /**
          * \overload
          * \brief Sets output for specified message type.
          * \param message_type MessageType
-         * \param output_stream const std::filesystem::path&
+         * \param file const std::filesystem::path&
          */
         
         static void setOutput(MessageType message_type, const std::filesystem::path& file);
@@ -147,7 +170,7 @@ namespace tristan::log{
          * \overload
          * \brief Sets output for specified message type.
          * \param message_type MessageType
-         * \param output_stream std::function\<void(const std::string&)\>&&
+         * \param output_func std::function\<void(const std::string&)\>&&
          */
         static void setOutput(MessageType message_type, std::function<void(const std::string&)>&& output_func);
         
@@ -161,7 +184,7 @@ namespace tristan::log{
          */
         template<class Object>
         static void setOutput(MessageType message_type, std::weak_ptr<Object> object, void (Object::*functor)(const std::string&));
-    
+        
         /**
          * \overload
          * \brief Sets output for specified message type.
@@ -192,7 +215,7 @@ namespace tristan::log{
         static void setGlobalFormatter(std::weak_ptr<Object> object,
                                        void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&,
                                                                const std::string&, int));
-    
+        
         /**
          * \overload
          * \brief Sets formatter for all message types.
@@ -204,20 +227,22 @@ namespace tristan::log{
         static void setGlobalFormatter(Object* object,
                                        void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&,
                                                                const std::string&, int));
-    
+        
         /**
          * \brief Sets formatter for specified message type.
-         * \param formatter std::function\std::string(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
+         * \param message_type MessageType
+         * \param formatter std::function\<std::string(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
          * \>&&
          */
         static void setFormatter(MessageType message_type,
                                  std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&,
                                                            const std::string&, int)>&& formatter);
-    
+        
         /**
          * \overload
          * \brief Sets formatter for specified message type.
          * \tparam Object class which implements the function pointer passed as a second parameter
+         * \param message_type MessageType
          * \param object std::shared_ptr\<Object\>
          * \param functor void (Object::*functor)(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
          */
@@ -225,11 +250,12 @@ namespace tristan::log{
         static void setFormatter(MessageType message_type, std::weak_ptr<Object> object,
                                  void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&,
                                                          int));
-    
+        
         /**
          * \overload
          * \brief Sets formatter for specified message type.
          * \tparam Object class which implements the function pointer passed as a second parameter
+         * \param message_type MessageType
          * \param object Object*
          * \param functor void (Object::*functor)(const std::chrono::time_point\<std::chrono::system_clock\>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
          */
@@ -247,9 +273,7 @@ namespace tristan::log{
          * \param line int
          */
         static void write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file, int line);
-        /**
-         * \brief Destructor
-         */
+        
         ~Log() = default;
     
     private:
@@ -269,7 +293,7 @@ namespace tristan::log{
          * \brief Stores string representations of message types.
          */
         std::unordered_map<MessageType, std::string> m_message_types;
-    
+        
         /**
          * \internal
          * \brief Stores output for each message type.
@@ -383,64 +407,70 @@ namespace tristan::log{
       };
     }
 
-/**
- * \def FLTrace(message)
- * Convenience macro to output Trace message.
- * \param message const std::string&
- */
+
 #if defined(LOG_DISABLE_TRACE)
 #define FLTrace(message)
 #else
-#define FLTrace(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#endif
 /**
- * \def FLDebug(message)
- * Convenience macro to output Debug message.
+ * \def FLTrace(message)
+ * \brief Convenience macro to output Trace message.
  * \param message const std::string&
  */
+#define FLTrace(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
+
 #if defined(LOG_DIABLE_DEBUG)
 #define FLDebug(message)
 #else
-#define FLDebug(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Debug, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#endif
 /**
- * \def FLError(message)
- * Convenience macro to output Error message.
+ * \def FLDebug(message)
+ * \brief Convenience macro to output Debug message.
  * \param message const std::string&
  */
+#define FLDebug(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Debug, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
+
 #if defined(LOG_DIABLE_ERROR)
 #define FLError(message)
 #else
-#define FLError(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#endif
 /**
- * \def FLWarning(message)
- * Convenience macro to output Warning message.
+ * \def FLError(message)
+ * \brief Convenience macro to output Error message.
  * \param message const std::string&
  */
+#define FLError(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
+
 #if defined(LOG_DIABLE_WARNING)
 #define FLWarning(message)
 #else
-#define FLWarning(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#endif
 /**
- * \def FLInfo(message)
- * Convenience macro to output Info message.
+ * \def FLWarning(message)
+ * \brief Convenience macro to output Warning message.
  * \param message const std::string&
  */
+#define FLWarning(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
+
 #if defined(LOG_DIABLE_INFO)
 #define FLInfo(message)
 #else
-#define FLInfo(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#endif
 /**
- * \def FLFatal(message)
- * Convenience macro to output Fatal message.
+ * \def FLInfo(message)
+ * \breif Convenience macro to output Info message.
  * \param message const std::string&
  */
+#define FLInfo(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
+
 #if defined(LOG_DIABLE_FATAL)
 #define FLFatal(message)
 #else
+/**
+ * \def FLFatal(message)
+ * \breif Convenience macro to output Fatal message.
+ * \param message const std::string&
+ */
 #define FLFatal(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 } //End of tristan::log namespace
