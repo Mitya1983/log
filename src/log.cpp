@@ -11,6 +11,10 @@ using namespace tristan::log;
 
 namespace{
     
+    
+    
+    auto getStringTime(std::chrono::time_point<std::chrono::system_clock> time_point) -> std::string;
+    
     /**
      * \internal
      * \brief Default formatter function for Trace messages.
@@ -115,7 +119,7 @@ namespace{
     
 } //End of unnamed namespace
 
-Log::Log() : m_log_level(MessageType::Trace){
+Log::Log(){
   
   m_message_types.emplace(MessageType::Trace, "TRACE");
   m_message_types.emplace(MessageType::Debug, "DEBUG");
@@ -138,10 +142,6 @@ Log::Log() : m_log_level(MessageType::Trace){
   m_formatters.emplace(MessageType::Info, infoFormatter);
   m_formatters.emplace(MessageType::Fatal, fatalFormatter);
   
-}
-
-void Log::setLogLevel(MessageType message_type){
-  Log::instance().m_log_level = message_type;
 }
 
 void Log::setMessageTypeOutput(MessageType message_type, const std::string& value){
@@ -198,7 +198,7 @@ void Log::setFormatter(MessageType message_type,
 
 void Log::write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file,
                 int line){
-  
+
   try{
     Log::instance()._write(message, message_type, function_name, file, line);
   }
@@ -211,9 +211,6 @@ void Log::write(const std::string& message, MessageType message_type, const std:
 
 void Log::_write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file,
                  int line){
-  if (message_type < m_log_level){
-    return;
-  }
   auto time_stamp = std::chrono::system_clock::now();
   auto formatter = m_formatters.at(message_type);
   std::string msg = formatter(time_stamp, message, m_message_types.at(message_type), function_name, file, line);
@@ -250,23 +247,50 @@ auto Log::instance() -> Log&{
 
 
 namespace{
+    
+    auto getStringTime(std::chrono::time_point<std::chrono::system_clock> time_point) -> std::string{
+      using Days = std::chrono::duration<int64_t, std::ratio_divide<std::ratio<86400>, std::chrono::seconds::period>>;
+      
+      auto time_duration = std::chrono::system_clock::duration(time_point.time_since_epoch());
+      auto days = std::chrono::duration_cast<Days>(time_duration);
+      
+      auto time_in_day = std::chrono::duration_cast<std::chrono::nanoseconds>(
+              time_duration - std::chrono::duration_cast<std::chrono::system_clock::duration>(days)
+      );
+  
+      tm tm_time{};
+      std::time_t time = std::chrono::system_clock::to_time_t(time_point);
+      localtime_s(&tm_time, &time);
+      std::string string_time;
+      if (tm_time.tm_hour < 10){
+        string_time += '0';
+      }
+      string_time = std::to_string(tm_time.tm_hour);
+      string_time += ':';
+      if (tm_time.tm_min < 10){
+        string_time += '0';
+      }
+      string_time += std::to_string(tm_time.tm_min);
+      string_time += ':';
+      if (tm_time.tm_sec < 10){
+        string_time += '0';
+      }
+      string_time += std::to_string(tm_time.tm_sec);
+      
+      return string_time;
+    }
+    
     auto traceFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                         const std::string& file_name, int line) -> std::string{
-      tm tm_time{};
-      std::time_t time_t_time = std::chrono::system_clock::to_time_t(time_point);
-      localtime_s(&tm_time, &time_t_time);
       std::stringstream output;
-      output << std::put_time(&tm_time, "%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function " << function_name;
+      output << time_point.time_since_epoch().count() << " | " << message_type << " | " << function_name << " | " << message;
       return output.str();
     }
     
     auto debugFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                         const std::string& file_name, int line) -> std::string{
-      tm tm_time{};
-      std::time_t time_t_time = std::chrono::system_clock::to_time_t(time_point);
-      localtime_s(&tm_time, &time_t_time);
       std::stringstream output;
-      output << std::put_time(&tm_time, "%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function " << function_name << " of file " << file_name
+      output << getStringTime(time_point) << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function " << function_name << " of file " << file_name
       << " at line " << line;
       return output.str();
     }
@@ -283,11 +307,9 @@ namespace{
     
     auto infoFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                        const std::string& file_name, int line) -> std::string{
-      tm tm_time{};
-      std::time_t time_t_time = std::chrono::system_clock::to_time_t(time_point);
-      localtime_s(&tm_time, &time_t_time);
+
       std::stringstream output;
-      output << std::put_time(&tm_time, "%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message;
+      output << getStringTime(time_point) << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message;
       return output.str();
     }
     
