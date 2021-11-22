@@ -373,21 +373,21 @@ namespace tristan::log{
     }
 
 #if defined(LOG_DISABLE_TRACE)
-#define FLTrace(message)
+#define WriteTrace(message)
 #else
     /**
-     * \def FLTrace(message)
+     * \def WriteTrace(message)
      * \brief Convenience macro to output Trace message.
      * \param message const std::string&
      */
-#define FLTrace(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteTrace(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
 #if defined(LOG_DIABLE_DEBUG)
-#define FLDebug(message)
+#define WriteDebug(message)
 #else
     /**
-     * \def FLDebug(message)
+     * \def WriteDebug(message)
      * \brief Convenience macro to output Debug message.
      * \param message const std::string&
      */
@@ -395,10 +395,10 @@ namespace tristan::log{
 #endif
 
 #if defined(LOG_DIABLE_ERROR)
-#define FLError(message)
+#define WriteError(message)
 #else
     /**
-     * \def FLError(message)
+     * \def WriteError(message)
      * \brief Convenience macro to output Error message.
      * \param message const std::string&
      */
@@ -406,10 +406,10 @@ namespace tristan::log{
 #endif
 
 #if defined(LOG_DIABLE_WARNING)
-#define FLWarning(message)
+#define WriteWarning(message)
 #else
     /**
-     * \def FLWarning(message)
+     * \def WriteWarning(message)
      * \brief Convenience macro to output Warning message.
      * \param message const std::string&
      */
@@ -417,25 +417,25 @@ namespace tristan::log{
 #endif
 
 #if defined(LOG_DIABLE_INFO)
-#define FLInfo(message)
+#define WriteInfo(message)
 #else
     /**
-     * \def FLInfo(message)
+     * \def WriteInfo(message)
      * \breif Convenience macro to output Info message.
      * \param message const std::string&
      */
-#define FLInfo(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteInfo(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
 #if defined(LOG_DIABLE_FATAL)
-#define FLFatal(message)
+#define WriteFatal(message)
 #else
     /**
-     * \def FLFatal(message)
+     * \def WriteFatal(message)
      * \breif Convenience macro to output Fatal message.
      * \param message const std::string&
      */
-#define FLFatal(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteFatal(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 } //End of tristan::log namespace
 
