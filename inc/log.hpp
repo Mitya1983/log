@@ -47,13 +47,17 @@ namespace tristan::log{
      * not checked before function invocation.
      * \attention Log write function is thread safe when output is set either to std::ostream or to std::filesystem::path and not thread safe in case of user defined callbacks. That is it is a user
      * obligation to handle multithreaded calls of provided callback function.
-     * \nOutput may be limited by log level using setLogLevel function.
-     * \nOutput may be disabled for any of message types by passing the [nullptr] value to setOutput function.
-     * \nBy default the log level is set to Trace which means that all types of messages will be sent to output and the output itself is set to std::cerr for Error and Fatal and std::cout for other
-     * message types.
+     * \nOutput may be limited by log level using the following preprocessor directives:
+     * \format LOG_DISABLE_TRACE
+     * \format LOG_DISABLE_DEBUG
+     * \format LOG_DISABLE_ERROR
+     * \format LOG_DISABLE_WARNING
+     * \format LOG_DISABLE_INFO
+     * \format LOG_DISABLE_FATAL
+     * \nAdditionally output may be disabled for any of message types on runtime by passing the [nullptr] value to setOutput function.
      * \par Formatting
      * \nDefault formatting is set to the following:
-     * \format Trace -   hh:mm:ss | TRACE | [message] in [function_name]
+     * \format Trace -   hh:mm:ss:sss:sss | TRACE | [message] | [function_name]
      * \format Debug -   hh:mm:ss | DEBUG | [message] in [function_name] of [file_name] at line [line]
      * \format Error -   hh:mm:ss | ERROR | [message]
      * \format Warning - hh:mm:ss | TRACE | [message]
@@ -76,17 +80,6 @@ namespace tristan::log{
         //OPERATORS
         Log& operator=(const Log&) = delete;
         Log& operator=(Log&&) = delete;
-        
-        /**
-         * \brief Sets log level according to provided message type.
-         *
-         * This function sets level of logging taking into account the order of message types defined in MessageTypes enum.
-         * The level is set using less comparison operator. That is message is sent to output only if message type of the latter is equal or greater to set log level.
-         * For example, if log level is set to MessageType::Info, only messages with message type Info and Fatal are sent to output.
-         *
-         * \param message_type MessageType
-         */
-        static void setLogLevel(MessageType message_type);
         
         /**
          * \brief Sets the string which will be sent to output.
@@ -290,12 +283,6 @@ namespace tristan::log{
         std::unordered_map<MessageType, std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&,
                                                                   const std::string&,
                                                                   int)> > m_formatters;
-        
-        /**
-         * \internal
-         * \brief Used to store desired log level.
-         */
-        MessageType m_log_level;
     };
     
     template<class Object>
@@ -401,39 +388,62 @@ namespace tristan::log{
  * Convenience macro to output Trace message.
  * \param message const std::string&
  */
+#if defined(LOG_DISABLE_TRACE)
+#define FLTrace(message)
+#else
 #define FLTrace(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Trace, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
 /**
  * \def FLDebug(message)
  * Convenience macro to output Debug message.
  * \param message const std::string&
  */
+#if defined(LOG_DIABLE_DEBUG)
+#define FLDebug(message)
+#else
 #define FLDebug(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Debug, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
 /**
  * \def FLError(message)
  * Convenience macro to output Error message.
  * \param message const std::string&
  */
+#if defined(LOG_DIABLE_ERROR)
+#define FLError(message)
+#else
 #define FLError(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
 /**
  * \def FLWarning(message)
  * Convenience macro to output Warning message.
  * \param message const std::string&
  */
+#if defined(LOG_DIABLE_WARNING)
+#define FLWarning(message)
+#else
 #define FLWarning(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
 /**
  * \def FLInfo(message)
  * Convenience macro to output Info message.
  * \param message const std::string&
  */
+#if defined(LOG_DIABLE_INFO)
+#define FLInfo(message)
+#else
 #define FLInfo(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Info, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif
 /**
  * \def FLFatal(message)
  * Convenience macro to output Fatal message.
  * \param message const std::string&
  */
+#if defined(LOG_DIABLE_FATAL)
+#define FLFatal(message)
+#else
 #define FLFatal(message) FlexLicensing::Logging::Log::write(message, FlexLicensing::Logging::MessageType::Fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-
-} //End of FlexLicensing namespace
+#endif
+} //End of tristan::log namespace
 
 #endif //LOG_HPP
 
