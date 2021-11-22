@@ -402,7 +402,7 @@ namespace tristan::log{
      * \brief Convenience macro to output Error message.
      * \param message const std::string&
      */
-#define FLError(message) tristan::log::Log::write(message, tristan::log::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteError(message) tristan::log::Log::write(message, tristan::log::MessageType::Error, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
 #if defined(LOG_DIABLE_WARNING)
@@ -413,7 +413,7 @@ namespace tristan::log{
      * \brief Convenience macro to output Warning message.
      * \param message const std::string&
      */
-#define FLWarning(message) tristan::log::Log::write(message, tristan::log::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define WriteWarning(message) tristan::log::Log::write(message, tristan::log::MessageType::Warning, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
 #if defined(LOG_DIABLE_INFO)
