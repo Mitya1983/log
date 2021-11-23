@@ -182,6 +182,36 @@ void Log::setFormatter(MessageType message_type, std::function<std::string(const
 
 void Log::write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file, int line){
 
+#if defined (LOG_DISABLE_TRACE)
+  if (message_type == MessageType::Trace){
+    return;
+  }
+#endif
+#if defined (LOG_DISABLE_DEBUG)
+  if (message_type == MessageType::Debug){
+    return;
+  }
+#endif
+#if defined (LOG_DISABLE_ERROR)
+  if (message_type == MessageType::Error){
+    return;
+  }
+#endif
+#if defined (LOG_DISABLE_WARNING)
+  if (message_type == MessageType::Warning){
+    return;
+  }
+#endif
+#if defined (LOG_DISABLE_INFO)
+  if (message_type == MessageType::Info){
+    return;
+  }
+#endif
+#if defined (LOG_DISABLE_FATAL)
+  if (message_type == MessageType::Fatal){
+    return;
+  }
+#endif
     try{
         Log::instance()._write(message, message_type, function_name, file, line);
     }
