@@ -9,7 +9,7 @@
 #if defined (_WIN32) || defined(_WIN64)
 #include <cerrno>
 #endif
-
+#include <thread>
 using namespace tristan::log;
 
 namespace{
@@ -260,7 +260,7 @@ namespace{
     auto traceFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name, const std::string& file_name, int line
     ) -> std::string{
         std::stringstream output;
-        output << time_point.time_since_epoch().count() << " | " << message_type << " | " << function_name << " | " << message;
+        output << std::this_thread::get_id() << " | " << time_point.time_since_epoch().count() << " | " << function_name << " | " << message;
         return output.str();
     }
 
