@@ -305,7 +305,7 @@ namespace{
         std::time_t time = std::chrono::system_clock::to_time_t(time_point);
         localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
         output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function "
-               << function_name << " of file " << file_name
+               << function_name << " of file " << std::filesystem::path(file_name).filename()
                << " at line " << line;
         return output.str();
     }
