@@ -4,7 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <mutex>
-#include <unordered_map>
+#include <vector>
 #include <variant>
 #include <ostream>
 #include <functional>
@@ -278,24 +278,24 @@ namespace tristan::log{
          * \internal
          * \brief Stores string representations of message types.
          */
-        std::unordered_map<MessageType, std::string> m_message_types;
+        std::vector<std::string> m_message_types;
 
         /**
          * \internal
          * \brief Stores output for each message type.
          */
-        std::unordered_map<MessageType, std::variant<std::ostream*, std::filesystem::path, std::function<void(const std::string&)>>> m_outputs;
+        std::vector<std::variant<std::monostate, std::ostream*, std::filesystem::path, std::function<void(const std::string&)>>> m_outputs;
 
         /**
          * \internal
          * \brief Stores formatter functions for each message type.
          */
-        std::unordered_map<MessageType, std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)> > m_formatters;
+        std::vector<std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)> > m_formatters;
     };
 
     template<class Object> void Log::setGlobalOutput(std::weak_ptr<Object> object, void (Object::*functor)(const std::string&)){
         for (auto& output: Log::instance().m_outputs){
-            output.second = [object, functor](const std::string& message){
+            output = [object, functor](const std::string& message){
                 if (auto l_object = object.lock()){
                     std::invoke(functor, l_object, message);
                 }
@@ -305,14 +305,14 @@ namespace tristan::log{
 
     template<class Object> void Log::setGlobalOutput(Object* object, void (Object::*functor)(const std::string&)){
         for (auto& output: Log::instance().m_outputs){
-            output.second = [object, functor](const std::string& message){
+            output = [object, functor](const std::string& message){
                 std::invoke(functor, object, message);
             };
         }
     }
 
     template<class Object> void Log::setOutput(MessageType message_type, std::weak_ptr<Object> object, void (Object::*functor)(const std::string&)){
-        Log::instance().m_outputs.at(message_type) = [object, functor](const std::string& message){
+        Log::instance().m_outputs.at(static_cast<size_t>(message_type)) = [object, functor](const std::string& message){
             if (auto l_object = object.lock()){
                 std::invoke(functor, l_object, message);
             }
@@ -320,7 +320,7 @@ namespace tristan::log{
     }
 
     template<class Object> void Log::setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&)){
-        Log::instance().m_outputs.at(message_type) = [object, functor](const std::string& message){
+        Log::instance().m_outputs.at(static_cast<size_t>(message_type)) = [object, functor](const std::string& message){
             std::invoke(functor, object, message);
         };
     }
@@ -329,7 +329,7 @@ namespace tristan::log{
                                                         void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
     ){
         for (auto& formatter: Log::instance().m_formatters){
-            formatter.second = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
+            formatter = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                                                  const std::string& file_name, int line
             ){
                 if (auto l_object = object.lock()){
@@ -342,7 +342,7 @@ namespace tristan::log{
     template<class Object> void Log::setGlobalFormatter(Object* object, void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
     ){
         for (auto& formatter: Log::instance().m_formatters){
-            formatter.second = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
+            formatter = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                                                  const std::string& file_name, int line
             ){
                 std::invoke(functor, object, time_point, message, message_type, function_name, file_name, line);
@@ -353,7 +353,7 @@ namespace tristan::log{
     template<class Object> void Log::setFormatter(MessageType message_type, std::weak_ptr<Object> object,
                                                   void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
     ){
-        Log::instance().m_formatters.at(message_type) = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
+        Log::instance().m_formatters.at(static_cast<size_t>(message_type)) = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                                                                           const std::string& file_name, int line
         ){
             if (auto l_object = object.lock()){
@@ -365,7 +365,7 @@ namespace tristan::log{
     template<class Object> void Log::setFormatter(MessageType message_type, Object* object,
                                                   void (Object::*functor)(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)
     ){
-        Log::instance().m_formatters.at(message_type) = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
+        Log::instance().m_formatters.at(static_cast<size_t>(message_type)) = [object, functor](const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
                                                                           const std::string& file_name, int line
         ){
             std::invoke(functor, object, time_point, message, message_type, function_name, file_name, line);
