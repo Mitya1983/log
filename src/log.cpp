@@ -27,10 +27,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto traceFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                        [[maybe_unused]] const std::string& function_name,
-                        [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto traceFormatter(const LogEvent& log_event) -> std::string;
     /**
      * \private
      * \brief Default formatter function for Debug messages.
@@ -42,10 +39,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto debugFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                        [[maybe_unused]] const std::string& function_name,
-                        [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto debugFormatter(const LogEvent& log_event) -> std::string;
     /**
      * \private
      * \brief Default formatter function for Error messages.
@@ -57,10 +51,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto errorFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                        [[maybe_unused]] const std::string& function_name,
-                        [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto errorFormatter(const LogEvent& log_event) -> std::string;
     /**
      * \private
      * \brief Default formatter function for Warning messages.
@@ -72,10 +63,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto warningFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                          [[maybe_unused]] const std::string& function_name,
-                          [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto warningFormatter(const LogEvent& log_event) -> std::string;
     /**
      * \private
      * \brief Default formatter function for Info messages.
@@ -87,10 +75,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto infoFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                       [[maybe_unused]] const std::string& function_name,
-                       [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto infoFormatter(const LogEvent& log_event) -> std::string;
     /**
      * \private
      * \brief Default formatter function for Fatal messages.
@@ -102,10 +87,7 @@ namespace{
      * \param line int
      * \return std::string which stores formatted message which will be sent to output
      */
-    auto fatalFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, [[maybe_unused]] const std::string& message_type,
-                        [[maybe_unused]] const std::string& function_name,
-                        [[maybe_unused]] const std::string& file_name, [[maybe_unused]] int line
-    ) -> std::string;
+    auto fatalFormatter(const LogEvent& log_event) -> std::string;
 
     /**
      * \brief Used to handle field width which is set by default formatter using std::setw call.
@@ -199,19 +181,17 @@ void Log::setOutput(MessageType message_type, std::function<void(const std::stri
 }
 
 void Log::setGlobalFormatter(
-    std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&, int)>&& formatter){
+    std::function<std::string(const LogEvent& log_event)>&& formatter){
     for (auto& l_formatter : Log::instance().m_formatters){
         l_formatter = formatter;
     }
 }
 
-void Log::setFormatter(MessageType message_type,
-                       std::function<std::string(const std::chrono::time_point<std::chrono::system_clock>&, const std::string&, const std::string&, const std::string&, const std::string&,
-                                                 int)>&& formatter){
+void Log::setFormatter(MessageType message_type, std::function<std::string(const LogEvent& log_event)>&& formatter){
     Log::instance().m_formatters.at(static_cast<size_t>(message_type)) = formatter;
 }
 
-void Log::write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file, int line){
+void Log::write(const LogEvent& log_event){
 
 #if defined (LOG_DISABLE_TRACE)
     if (message_type == MessageType::Trace){
@@ -243,11 +223,11 @@ void Log::write(const std::string& message, MessageType message_type, const std:
       return;
     }
 #endif
-    if (std::holds_alternative<std::monostate>(Log::instance().m_outputs.at(static_cast<size_t>(message_type)))){
+    if (std::holds_alternative<std::monostate>(Log::instance().m_outputs.at(static_cast<size_t>(log_event.message_type)))){
         return;
     }
     try{
-        Log::instance()._write(message, message_type, function_name, file, line);
+        Log::instance()._write(log_event);
     }
     catch (const std::fstream::failure& e){
         std::cerr << e.what() << ": " << e.code().message() << std::endl;
@@ -256,10 +236,10 @@ void Log::write(const std::string& message, MessageType message_type, const std:
 
 }
 
-void Log::_write(const std::string& message, MessageType message_type, const std::string& function_name, const std::string& file, int line){
+void Log::_write(const LogEvent& log_event){
     auto time_stamp = std::chrono::system_clock::now();
-    auto formatter = m_formatters.at(static_cast<size_t>(message_type));
-    std::string msg = formatter(time_stamp, message, m_message_types.at(static_cast<size_t>(message_type)), function_name, file, line);
+    auto formatter = m_formatters.at(static_cast<size_t>(log_event.message_type));
+    std::string msg = formatter(log_event);
     std::visit([this, &msg](auto&& arg) -> void{
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::ostream*>){
@@ -278,7 +258,7 @@ void Log::_write(const std::string& message, MessageType message_type, const std
         else if constexpr(std::is_same_v<T, std::function<void(const std::string&)>>){
             arg(msg);
         }
-    }, m_outputs.at(static_cast<size_t>(message_type)));
+    }, m_outputs.at(static_cast<size_t>(log_event.message_type)));
 }
 
 auto Log::instance() -> Log&{
@@ -289,53 +269,46 @@ auto Log::instance() -> Log&{
 
 namespace{
 
-    auto traceFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                        const std::string& file_name, int line
-    ) -> std::string{
+    auto traceFormatter(const LogEvent& log_event) -> std::string{
         std::stringstream output;
-        output << std::this_thread::get_id() << " | " << time_point.time_since_epoch().count() << " | " << function_name << " | " << message;
+        output << std::this_thread::get_id() << " | " << log_event.time_point.time_since_epoch().count() << " | " << log_event.function_name << " | " << log_event.message;
         return output.str();
     }
 
-    auto debugFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                        const std::string& file_name, int line
-    ) -> std::string{
+    auto debugFormatter(const LogEvent& log_event) -> std::string{
         std::stringstream output;
         tm tm_time{};
-        std::time_t time = std::chrono::system_clock::to_time_t(time_point);
-        localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
-        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message << " in function "
-               << function_name << " of file " << std::filesystem::path(file_name).filename()
-               << " at line " << line;
+        std::time_t time = std::chrono::system_clock::to_time_t(log_event.time_point);
+        gmtime_r(const_cast<const std::time_t*>(&time), &tm_time);
+        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T%Z") << " | "
+               << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+               << "MESSAGE: " << log_event.message
+               << "FUNCTION: " << log_event.function_name
+               << "FILE: " << std::filesystem::path(log_event.file_name).filename()
+               << "LINE: " << log_event.line;
         return output.str();
     }
 
-    auto errorFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                        const std::string& file_name, int line
-    ) -> std::string{
-        return infoFormatter(time_point, message, message_type, function_name, file_name, line);
+    auto errorFormatter(const LogEvent& log_event) -> std::string{
+        return infoFormatter(log_event);
     }
 
-    auto warningFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                          const std::string& file_name, int line
-    ) -> std::string{
-        return infoFormatter(time_point, message, message_type, function_name, file_name, line);
+    auto warningFormatter(const LogEvent& log_event) -> std::string{
+        return infoFormatter(log_event);
     }
 
-    auto infoFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                       const std::string& file_name, int line
-    ) -> std::string{
+    auto infoFormatter(const LogEvent& log_event) -> std::string{
         std::stringstream output;
         tm tm_time{};
-        std::time_t time = std::chrono::system_clock::to_time_t(time_point);
-        localtime_r(const_cast<const std::time_t*>(&time), &tm_time);
-        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T") << " | " << std::left << std::setw(g_message_type_output_width) << message_type << " | " << message;
+        std::time_t time = std::chrono::system_clock::to_time_t(log_event.time_point);
+        gmtime_r(const_cast<const std::time_t*>(&time), &tm_time);
+        output << std::put_time(const_cast<const tm*>(&tm_time), "%FT%T%Z") << " | "
+               << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+               << "MESSAGE: " << log_event.message;
         return output.str();
     }
 
-    auto fatalFormatter(const std::chrono::time_point<std::chrono::system_clock>& time_point, const std::string& message, const std::string& message_type, const std::string& function_name,
-                        const std::string& file_name, int line
-    ) -> std::string{
-        return debugFormatter(time_point, message, message_type, function_name, file_name, line);
+    auto fatalFormatter(const LogEvent& log_event) -> std::string{
+        return debugFormatter(log_event);
     }
 } //End of unnamed namespace
