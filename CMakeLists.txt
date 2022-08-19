@@ -33,7 +33,7 @@ set(LIBRARY_INSTALL_DIR ${PROJECT_INSTALL_DIR}/${CMAKE_BUILD_TYPE})
 message(STATUS "Library install directory is set to ${LIBRARY_INSTALL_DIR}")
 set(INCLUDE_INSTALL_DIR ${LIBRARY_INSTALL_DIR}/inc)
 message(STATUS "Include install directory is set to ${INCLUDE_INSTALL_DIR}")
-set(CMAKE_CONFIG_INSTALL_DIR ${GENERAL_INSTALL_DIR}/cmake)
+set(CMAKE_CONFIG_INSTALL_DIR ${GENERAL_INSTALL_DIR}/cmake/${CMAKE_BUILD_TYPE})
 message(STATUS "CMake config files install directory is set to ${CMAKE_CONFIG_INSTALL_DIR}")
 
 set(UNINSTALLER_NAME uninstall_${CMAKE_BUILD_TYPE}.sh)
