@@ -119,6 +119,8 @@ Log::Log() {
     m_formatters.emplace_back(fatalFormatter);
 }
 
+void Log::setModuleName(std::string name) { m_module_name = std::move(name); }
+
 void Log::setMessageTypeOutput(MessageType message_type, const std::string& value) {
     m_message_types.at(static_cast< size_t >(message_type)) = value;
     if (value.length() > g_message_type_output_width) {
@@ -178,7 +180,8 @@ void Log::setGlobalFormatter(std::function< std::string(LogEvent&& log_event) >&
     }
 }
 
-void Log::setFormatter(MessageType message_type, std::function< std::string(LogEvent&& log_event) >&& formatter) {
+void Log::setFormatter(MessageType message_type,
+                       std::function< std::string(LogEvent&& log_event) >&& formatter) {
     m_formatters.at(static_cast< size_t >(message_type)) = formatter;
 }
 
@@ -218,6 +221,7 @@ void Log::write(LogEvent&& log_event) {
     auto time_stamp = std::chrono::system_clock::now();
     auto message_type_index = static_cast< size_t >(log_event.message_type);
     log_event.message_type_string = m_message_types.at(message_type_index);
+    log_event.module_name = m_module_name;
     auto formatter = m_formatters.at(message_type_index);
     std::string msg = formatter(std::move(log_event));
     std::visit(
@@ -262,7 +266,8 @@ namespace {
                << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
                << log_event.module_name << " | "
                << "MESSAGE: " << log_event.message << "FUNCTION: " << log_event.function_name
-               << "FILE: " << std::filesystem::path(log_event.file_name).filename() << "LINE: " << log_event.line;
+               << "FILE: " << std::filesystem::path(log_event.file_name).filename()
+               << "LINE: " << log_event.line;
         return output.str();
     }
 

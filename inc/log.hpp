@@ -112,6 +112,8 @@ namespace tristan::log {
          */
         Log& operator=(Log&&) = delete;
 
+        void setModuleName(std::string name);
+
         /**
          * \brief Sets the string representation of MessageType.
          *
@@ -288,6 +290,8 @@ namespace tristan::log {
     private:
         Log();
 
+        std::string m_module_name;
+
         /**
          * \internal
          * \brief Mutex to handle multithreaded output if output is set to
@@ -412,13 +416,11 @@ namespace tristan::log {
 
         MessageType message_type;
 
-        LogEvent(std::string _module_name,
-                 std::string _message,
+        LogEvent(std::string _message,
                  MessageType _message_type,
                  std::string _function_name,
                  std::string _file_name,
                  int _line) :
-            module_name(std::move(_module_name)),
             message(std::move(_message)),
             function_name(std::move(_function_name)),
             file_name(std::move(_file_name)),
