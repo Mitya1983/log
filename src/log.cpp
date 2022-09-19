@@ -233,7 +233,7 @@ void Log::write(LogEvent&& log_event) {
             } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                 std::scoped_lock< std::mutex > lock(m_mutex);
                 std::ofstream file(arg, std::ios::app);
-                if (!file.is_open()) {
+                if (not file.is_open()) {
                     throw std::fstream::failure("Could not open Log file for writing - ",
                                                 std::error_code(errno, std::system_category()));
                 }
