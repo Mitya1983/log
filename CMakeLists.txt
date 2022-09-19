@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(BUILD_SHARED "" ON)
 option(BUILD_STATIC "" OFF)
+option(GENERATE_DEB_PACKAGE "" OFF)
 
 if (${BUILD_STATIC})
     message(STATUS "Static library is enabled - switching off shared one")
@@ -72,6 +73,12 @@ write_basic_package_version_file(
         COMPATIBILITY SameMajorVersion
 )
 
+if (${GENERATE_DEB_PACKAGE})
+    add_custom_command(TARGET ${PROJECT_NAME}
+            POST_BUILD
+            COMMAND
+            )
+endif (${GENERATE_DEB_PACKAGE})
 
 install(TARGETS ${PROJECT_NAME}
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
@@ -88,11 +95,11 @@ install(FILES
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         DESTINATION ${INCLUDE_INSTALL_DIR})
 
-install(CODE "include(${CMAKE_CURRENT_SOURCE_DIR}/CustomFunctions.cmake)\ngenerate_uninstall_script(${PROJECT_INSTALL_DIR} ${CMAKE_CONFIG_INSTALL_DIR} ${GENERAL_INSTALL_DIR} ${UNINSTALLER_NAME})")
-
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${UNINSTALLER_NAME}
-        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        DESTINATION ${PROJECT_INSTALL_DIR})
-
-install(CODE "execute_process(COMMAND chmod +x ${PROJECT_INSTALL_DIR}/${UNINSTALLER_NAME})")
+#install(CODE "include(${CMAKE_CURRENT_SOURCE_DIR}/CustomFunctions.cmake)\ngenerate_uninstall_script(${PROJECT_INSTALL_DIR} ${CMAKE_CONFIG_INSTALL_DIR} ${GENERAL_INSTALL_DIR} ${UNINSTALLER_NAME})")
+#
+#install(FILES
+#        ${CMAKE_CURRENT_BINARY_DIR}/${UNINSTALLER_NAME}
+#        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+#        DESTINATION ${PROJECT_INSTALL_DIR})
+#
+#install(CODE "execute_process(COMMAND chmod +x ${PROJECT_INSTALL_DIR}/${UNINSTALLER_NAME})")
