@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.17)
 project(Log LANGUAGES CXX DESCRIPTION "Simple logging lib in C++")
 include(CustomFunctions.cmake)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_SHARED "" ON)
 option(BUILD_STATIC "" OFF)
-option(GENERATE_DEB_PACKAGE "" OFF)
+option(GENERATE_DEB_PACKAGE "" ON)
 
 if (${BUILD_STATIC})
     message(STATUS "Static library is enabled - switching off shared one")
@@ -18,7 +18,7 @@ set_project_properties()
 
 prepare_source_files(INC_FILES SRC_FILES)
 
-set(LIB_VERSION 1.0)
+set(LIB_VERSION 0.1)
 
 
 if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
@@ -37,8 +37,6 @@ message(STATUS "Include install directory is set to ${INCLUDE_INSTALL_DIR}")
 set(CMAKE_CONFIG_INSTALL_DIR ${GENERAL_INSTALL_DIR}/cmake/${CMAKE_BUILD_TYPE})
 message(STATUS "CMake config files install directory is set to ${CMAKE_CONFIG_INSTALL_DIR}")
 
-set(UNINSTALLER_NAME uninstall_${CMAKE_BUILD_TYPE}.sh)
-
 if (BUILD_SHARED)
     message(STATUS "Will build shared library")
     add_library(${PROJECT_NAME} SHARED)
@@ -46,6 +44,10 @@ else ()
     message(STATUS "Will build static library")
     add_library(${PROJECT_NAME} STATIC)
 endif (BUILD_SHARED)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC TRISTAN_DEBUG)
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 target_sources(
         ${PROJECT_NAME}
@@ -60,6 +62,15 @@ set_target_properties(
         OUTPUT_NAME ${PROJECT_NAME}
 )
 
+if (GENERATE_DEB_PACKAGE)
+    add_custom_command(
+            TARGET ${PROJECT_NAME}
+            POST_BUILD
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMAND cpack .
+    )
+endif (GENERATE_DEB_PACKAGE)
+
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/PackageConfig.cmake.in
@@ -73,16 +84,9 @@ write_basic_package_version_file(
         COMPATIBILITY SameMajorVersion
 )
 
-if (${GENERATE_DEB_PACKAGE})
-    add_custom_command(TARGET ${PROJECT_NAME}
-            POST_BUILD
-            COMMAND
-            )
-endif (${GENERATE_DEB_PACKAGE})
-
 install(TARGETS ${PROJECT_NAME}
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        DESTINATION ${LIBRARY_INSTALL_DIR})
+        LIBRARY DESTINATION ${LIBRARY_INSTALL_DIR})
 
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
@@ -94,6 +98,11 @@ install(FILES
         ${INC_FILES}
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         DESTINATION ${INCLUDE_INSTALL_DIR})
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "Log")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "tristan.it@outlook.com")
+include(CPack)
 
 #install(CODE "include(${CMAKE_CURRENT_SOURCE_DIR}/CustomFunctions.cmake)\ngenerate_uninstall_script(${PROJECT_INSTALL_DIR} ${CMAKE_CONFIG_INSTALL_DIR} ${GENERAL_INSTALL_DIR} ${UNINSTALLER_NAME})")
 #
