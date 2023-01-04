@@ -1,22 +1,57 @@
 cmake_minimum_required(VERSION 3.17)
 
 project(Log LANGUAGES CXX DESCRIPTION "Simple logging lib in C++")
-include(CustomFunctions.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_SHARED "" ON)
 option(BUILD_STATIC "" OFF)
-option(GENERATE_DEB_PACKAGE "" ON)
+option(GENERATE_DEB_PACKAGE "" OFF)
 
 if (${BUILD_STATIC})
     message(STATUS "Static library is enabled - switching off shared one")
     set(BUILD_SHARED OFF)
 endif (${BUILD_STATIC})
 
-set_project_properties()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # using Clang
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "-g -g3 -glldb -ggdb -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror -fsanitize=address")
+#        set(CMAKE_CXX_FLAGS "-g -g3 -glldb -ggdb -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -glldb0 -O3")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # using GCC
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "-g -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -O3")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # using Visual Studio C++
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(CMAKE_CXX_FLAGS "/Zi /Od /JMC /WX")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if (CMAKE_BUILD_TYPE STREQUAL "Release")
+        set(CMAKE_CXX_FLAGS "/Ot /O2")
+    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+else ()
+    message(FATAL_ERROR "Compiler not supported")
+endif ()
 
-prepare_source_files(INC_FILES SRC_FILES)
+include_directories(
+        inc/
+)
+
+file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS
+        inc/*.hpp
+        )
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+        src/*.cpp
+        )
 
 set(LIB_VERSION 0.1)
 
@@ -103,12 +138,3 @@ set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_NAME "Log")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "tristan.it@outlook.com")
 include(CPack)
-
-#install(CODE "include(${CMAKE_CURRENT_SOURCE_DIR}/CustomFunctions.cmake)\ngenerate_uninstall_script(${PROJECT_INSTALL_DIR} ${CMAKE_CONFIG_INSTALL_DIR} ${GENERAL_INSTALL_DIR} ${UNINSTALLER_NAME})")
-#
-#install(FILES
-#        ${CMAKE_CURRENT_BINARY_DIR}/${UNINSTALLER_NAME}
-#        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-#        DESTINATION ${PROJECT_INSTALL_DIR})
-#
-#install(CODE "execute_process(COMMAND chmod +x ${PROJECT_INSTALL_DIR}/${UNINSTALLER_NAME})")
