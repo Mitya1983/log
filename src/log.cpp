@@ -1,8 +1,8 @@
 #include "log.hpp"
+#include "ipc_lock.hpp"
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <ctime>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -106,10 +106,10 @@ Log::Log() {
 
     m_outputs.emplace_back(&std::cout);
     m_outputs.emplace_back(&std::cout);
-    m_outputs.emplace_back(&std::cerr);
     m_outputs.emplace_back(&std::cout);
     m_outputs.emplace_back(&std::cout);
-    m_outputs.emplace_back(&std::cerr);
+    m_outputs.emplace_back(&std::cout);
+    m_outputs.emplace_back(&std::cout);
 
     m_formatters.emplace_back(traceFormatter);
     m_formatters.emplace_back(debugFormatter);
@@ -218,7 +218,6 @@ void Log::write(LogEvent&& log_event) {
     }
 #endif
 
-    auto time_stamp = std::chrono::system_clock::now();
     auto message_type_index = static_cast< size_t >(log_event.message_type);
     log_event.message_type_string = m_message_types.at(message_type_index);
     log_event.module_name = m_module_name;
@@ -232,6 +231,7 @@ void Log::write(LogEvent&& log_event) {
                 *arg << msg << std::endl;
             } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                 std::scoped_lock< std::mutex > lock(m_mutex);
+                tristan::IPC_Lock file_lock("TristanLoggerLock");
                 std::ofstream file(arg, std::ios::app);
                 if (not file.is_open()) {
                     throw std::fstream::failure("Could not open Log file for writing - ",
@@ -265,13 +265,13 @@ namespace {
         output << std::put_time(const_cast< const tm* >(&tm_time), "%FT%T%Z") << " | " << std::left
                << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
                << log_event.module_name << " | "
-               << "MESSAGE: " << log_event.message << "FUNCTION: " << log_event.function_name
-               << "FILE: " << std::filesystem::path(log_event.file_name).filename()
-               << "LINE: " << log_event.line;
+               << "MESSAGE: " << log_event.message << " | FUNCTION: " << log_event.function_name
+               << " | FILE: " << std::filesystem::path(log_event.file_name).filename()
+               << " | LINE: " << log_event.line;
         return output.str();
     }
 
-    auto errorFormatter(const LogEvent& log_event) -> std::string { return infoFormatter(log_event); }
+    auto errorFormatter(const LogEvent& log_event) -> std::string { return debugFormatter(log_event); }
 
     auto warningFormatter(const LogEvent& log_event) -> std::string { return infoFormatter(log_event); }
 
