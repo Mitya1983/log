@@ -416,6 +416,14 @@ namespace tristan::log {
 
         MessageType message_type;
 
+        /**
+         *
+         * \param _message std::string
+         * \param _message_type tristan::log::MessageType
+         * \param _function_name std::string
+         * \param _file_name std::string
+         * \param _line int
+         */
         LogEvent(std::string _message,
                  MessageType _message_type,
                  std::string _function_name,
