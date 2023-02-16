@@ -112,7 +112,17 @@ namespace tristan::log {
          */
         Log& operator=(Log&&) = delete;
 
+        /**
+         * \brief Sets module name
+         * \param name std::string
+         */
         void setModuleName(std::string name);
+
+        /**
+         * \brief Sets name for IPC lock, aka sem.[name]
+         * \param name std::string
+         */
+        void setIpcLockName(std::string name);
 
         /**
          * \brief Sets the string representation of MessageType.
@@ -290,14 +300,15 @@ namespace tristan::log {
     private:
         Log();
 
-        std::string m_module_name;
-
         /**
          * \internal
          * \brief Mutex to handle multithreaded output if output is set to
          * std::ostream or std::filesystem::path and thus the std::ofstream is used.
          */
         std::mutex m_mutex;
+
+        std::string m_module_name;
+        std::string m_ipc_lock_name;
 
         /**
          * \internal
