@@ -95,7 +95,8 @@ namespace {
 
 }  // End of unnamed namespace
 
-Log::Log() {
+Log::Log() :
+    m_ipc_lock_name("LoggerLock") {
 
     m_message_types.emplace_back("TRACE");
     m_message_types.emplace_back("DEBUG");
@@ -120,6 +121,8 @@ Log::Log() {
 }
 
 void Log::setModuleName(std::string name) { m_module_name = std::move(name); }
+
+void Log::setIpcLockName(std::string name) { m_ipc_lock_name = std::move(name); }
 
 void Log::setMessageTypeOutput(MessageType message_type, const std::string& value) {
     m_message_types.at(static_cast< size_t >(message_type)) = value;
@@ -231,7 +234,7 @@ void Log::write(LogEvent&& log_event) {
                 *arg << msg << std::endl;
             } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                 std::scoped_lock< std::mutex > lock(m_mutex);
-                tristan::IPC_Lock file_lock("TristanLoggerLock");
+                tristan::IPC_Lock file_lock(m_ipc_lock_name);
                 std::ofstream file(arg, std::ios::app);
                 if (not file.is_open()) {
                     throw std::fstream::failure("Could not open Log file for writing - ",
