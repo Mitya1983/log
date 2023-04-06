@@ -12,10 +12,6 @@
 #include <variant>
 #include <vector>
 
-#ifdef _MSC_VER
-  #define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
-
 namespace tristan::log {
 
     /**
