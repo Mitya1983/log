@@ -435,7 +435,7 @@ namespace tristan::log {
                  MessageType _message_type,
                  std::string _function_name,
                  std::string _file_name,
-                 int _line) :
+                 uint32_t _line) :
             message(std::move(_message)),
             function_name(std::move(_function_name)),
             file_name(std::move(_file_name)),
