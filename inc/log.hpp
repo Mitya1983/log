@@ -12,6 +12,10 @@
 #include <variant>
 #include <vector>
 
+namespace tristan::date_time {
+    class DateTime;
+} //End of tristan::time namespace
+
 namespace tristan::log {
 
     /**
@@ -237,7 +241,7 @@ namespace tristan::log {
          */
         template < class Object >
         void setGlobalFormatter(std::weak_ptr< Object > object,
-                                void (Object::*functor)(LogEvent&& log_event));
+                                std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \overload
@@ -247,7 +251,7 @@ namespace tristan::log {
          * \param functor void (Object::*functor)(LogEvent&&)
          */
         template < class Object >
-        void setGlobalFormatter(Object* object, void (Object::*functor)(LogEvent&& log_event));
+        void setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \brief Sets formatter for specified message type.
@@ -268,7 +272,7 @@ namespace tristan::log {
         template < class Object >
         void setFormatter(MessageType message_type,
                           std::weak_ptr< Object > object,
-                          void (Object::*functor)(LogEvent&& log_event));
+                          std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \overload
@@ -281,7 +285,7 @@ namespace tristan::log {
         template < class Object >
         void setFormatter(MessageType message_type,
                           Object* object,
-                          void (Object::*functor)(LogEvent&& log_event));
+                          std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \brief Writes log message of preset format to preset output.
@@ -371,21 +375,21 @@ namespace tristan::log {
 
     template < class Object >
     void Log::setGlobalFormatter(std::weak_ptr< Object > object,
-                                 void (Object::*functor)(LogEvent&& log_event)) {
+                                 std::string (Object::*functor)(LogEvent&& log_event)) {
         for (auto& formatter: m_formatters) {
-            formatter = [object, functor](LogEvent&& log_event) {
+            formatter = [object, functor](LogEvent&& log_event) -> std::string {
                 if (auto l_object = object.lock()) {
-                    std::invoke(functor, l_object, std::move(log_event));
+                    return std::invoke(functor, l_object, std::move(log_event));
                 }
             };
         }
     }
 
     template < class Object >
-    void Log::setGlobalFormatter(Object* object, void (Object::*functor)(LogEvent&& log_event)) {
+    void Log::setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event)) {
         for (auto& formatter: m_formatters) {
-            formatter = [object, functor](LogEvent&& log_event) {
-                std::invoke(functor, object, std::move(log_event));
+            formatter = [object, functor](LogEvent&& log_event) -> std::string {
+                return std::invoke(functor, object, std::move(log_event));
             };
         }
     }
@@ -393,10 +397,10 @@ namespace tristan::log {
     template < class Object >
     void Log::setFormatter(MessageType message_type,
                            std::weak_ptr< Object > object,
-                           void (Object::*functor)(LogEvent&& log_event)) {
-        m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) {
+                           std::string (Object::*functor)(LogEvent&& log_event)) {
+        m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) -> std::string {
             if (auto l_object = object.lock()) {
-                std::invoke(functor, l_object, std::move(log_event));
+                return std::invoke(functor, l_object, std::move(log_event));
             }
         };
     }
@@ -404,9 +408,9 @@ namespace tristan::log {
     template < class Object >
     void Log::setFormatter(MessageType message_type,
                            Object* object,
-                           void (Object::*functor)(LogEvent&& log_event)) {
-        m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) {
-            std::invoke(functor, object, std::move(log_event));
+                           std::string (Object::*functor)(LogEvent&& log_event)) {
+        m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) -> std::string {
+            return std::invoke(functor, object, std::move(log_event));
         };
     }
 
@@ -418,31 +422,24 @@ namespace tristan::log {
         std::string file_name;
         std::string line;
 
-        std::chrono::time_point< std::chrono::system_clock > time_point;
+        std::unique_ptr<tristan::date_time::DateTime> time_point;
         std::thread::id thread_id;
 
         MessageType message_type;
 
         /**
          *
-         * \param _message std::string
-         * \param _message_type tristan::log::MessageType
-         * \param _function_name std::string
-         * \param _file_name std::string
-         * \param _line int
+         * \param p_message std::string
+         * \param p_message_type tristan::log::MessageType
+         * \param p_function_name std::string
+         * \param p_file_name std::string
+         * \param p_line int
          */
-        LogEvent(std::string _message,
-                 MessageType _message_type,
-                 std::string _function_name,
-                 std::string _file_name,
-                 int _line) :
-            message(std::move(_message)),
-            function_name(std::move(_function_name)),
-            file_name(std::move(_file_name)),
-            line(std::to_string(_line)),
-            time_point(std::chrono::system_clock::now()),
-            thread_id(std::this_thread::get_id()),
-            message_type(_message_type) { }
+        LogEvent(std::string p_message,
+                 MessageType p_message_type,
+                 std::string p_function_name,
+                 std::string p_file_name,
+                 uint32_t p_line);
     };
 
 }  // namespace tristan::log
