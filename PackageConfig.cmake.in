@@ -1,4 +1,4 @@
-set(LOG_VERSION 0.1)
+set(LOG_VERSION 0.1.3)
 
 @PACKAGE_INIT@
 
