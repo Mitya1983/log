@@ -251,22 +251,19 @@ auto Log::createLogInstance() -> std::unique_ptr< Log > { return std::unique_ptr
 namespace {
 
     auto traceFormatter(const LogEvent& log_event) -> std::string {
-        std::stringstream output;
-        output << log_event.thread_id << " | " << log_event.time_point.time_since_epoch().count() << " | " << log_event.module_name << " | "
-               << log_event.function_name << " | " << log_event.message;
-        return output.str();
+        std::stringstream l_stringstream;
+        l_stringstream << log_event.thread_id << " | " << log_event.time_point << " | " << log_event.module_name << " | " << log_event.function_name << " | "
+                       << log_event.message;
+        return l_stringstream.str();
     }
 
     auto debugFormatter(const LogEvent& log_event) -> std::string {
-        std::stringstream output;
-        tm tm_time{};
-        std::time_t time = std::chrono::system_clock::to_time_t(log_event.time_point);
-        gmtime_r(const_cast< const std::time_t* >(&time), &tm_time);
-        output << std::put_time(const_cast< const tm* >(&tm_time), "%FT%T%Z") << " | " << std::left << std::setw(g_message_type_output_width)
-               << log_event.message_type_string << " | " << log_event.module_name << " | "
-               << "MESSAGE: " << log_event.message << " | FUNCTION: " << log_event.function_name
-               << " | FILE: " << std::filesystem::path(log_event.file_name).filename() << " | LINE: " << log_event.line;
-        return output.str();
+        std::stringstream l_stringstream;
+        l_stringstream << log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+                       << log_event.module_name << " | "
+                       << "MESSAGE: " << log_event.message << " | FUNCTION: " << log_event.function_name
+                       << " | FILE: " << std::filesystem::path(log_event.file_name).filename() << " | LINE: " << log_event.line;
+        return l_stringstream.str();
     }
 
     auto errorFormatter(const LogEvent& log_event) -> std::string { return debugFormatter(log_event); }
@@ -274,14 +271,12 @@ namespace {
     auto warningFormatter(const LogEvent& log_event) -> std::string { return infoFormatter(log_event); }
 
     auto infoFormatter(const LogEvent& log_event) -> std::string {
-        std::stringstream output;
-        tm tm_time{};
-        std::time_t time = std::chrono::system_clock::to_time_t(log_event.time_point);
-        gmtime_r(const_cast< const std::time_t* >(&time), &tm_time);
-        output << std::put_time(const_cast< const tm* >(&tm_time), "%FT%T%Z") << " | " << std::left << std::setw(g_message_type_output_width)
-               << log_event.message_type_string << " | " << log_event.module_name << " | "
-               << "MESSAGE: " << log_event.message;
-        return output.str();
+        std::stringstream l_stringstream;
+
+        l_stringstream << log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+                       << log_event.module_name << " | "
+                       << "MESSAGE: " << log_event.message;
+        return l_stringstream.str();
     }
 
     auto fatalFormatter(const LogEvent& log_event) -> std::string { return debugFormatter(log_event); }
@@ -292,6 +287,6 @@ LogEvent::LogEvent(std::string p_message, MessageType p_message_type, std::strin
     function_name(std::move(p_function_name)),
     file_name(std::move(p_file_name)),
     line(std::to_string(p_line)),
-    time_point(std::make_unique<tristan::date_time::DateTime>(tristan::time::Precision::NANOSECONDS)),
+    time_point(std::make_unique< tristan::date_time::DateTime >(tristan::time::Precision::NANOSECONDS)),
     thread_id(std::this_thread::get_id()),
     message_type(p_message_type) { }
