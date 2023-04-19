@@ -14,7 +14,7 @@ namespace {
 
 tristan::date_time::DateTime::DateTime(tristan::time::Precision p_precision) :
     m_date(),
-    m_time(tristan::time::Time::localTime(p_precision)) { }
+    m_time(p_precision) { }
 
 tristan::date_time::DateTime::DateTime(tristan::TimeZone p_time_zone, tristan::time::Precision p_precision) :
     m_date(p_time_zone),
