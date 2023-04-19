@@ -4,7 +4,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <ctime>
 
 #if defined(_WIN32) || defined(_WIN64)
   #include <cerrno>
@@ -290,3 +289,5 @@ LogEvent::LogEvent(std::string p_message, MessageType p_message_type, std::strin
     time_point(std::make_unique< tristan::date_time::DateTime >(tristan::time::Precision::NANOSECONDS)),
     thread_id(std::this_thread::get_id()),
     message_type(p_message_type) { }
+
+LogEvent::~LogEvent() = default;
