@@ -440,6 +440,7 @@ namespace tristan::log {
                  std::string p_function_name,
                  std::string p_file_name,
                  uint32_t p_line);
+        ~LogEvent();
     };
 
 }  // namespace tristan::log
