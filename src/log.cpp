@@ -290,4 +290,7 @@ LogEvent::LogEvent(std::string p_message, MessageType p_message_type, std::strin
     thread_id(std::this_thread::get_id()),
     message_type(p_message_type) { }
 
+LogEvent::LogEvent(std::string p_message, MessageType p_message_type, std::source_location p_source_location) :
+    LogEvent(std::move(p_message), p_message_type, p_source_location.function_name(), p_source_location.file_name(), p_source_location.line()) { }
+
 LogEvent::~LogEvent() = default;
