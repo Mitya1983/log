@@ -48,16 +48,20 @@ endif ()
 
 include_directories(
         inc/
+        inc/private
 )
 
-file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS
+file(GLOB INC_FILES CONFIGURE_DEPENDS
         inc/*.hpp
         )
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
+file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
+        inc/private/*.hpp
+        )
+file(GLOB SRC_FILES CONFIGURE_DEPENDS
         src/*.cpp
         )
 
-set(LIB_VERSION 0.1.3)
+set(LIB_VERSION 1.0.0)
 
 
 if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
@@ -108,6 +112,7 @@ endif (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD
 target_sources(
         ${PROJECT_NAME}
         PRIVATE ${SRC_FILES}
+        PRIVATE ${PRIVATE_INC_FILES}
         PUBLIC ${INC_FILES}
 )
 
@@ -164,7 +169,7 @@ install(FILES
         DESTINATION ${CMAKE_CONFIG_INSTALL_DIR})
 
 install(FILES
-        inc/log.hpp
+        ${INC_FILES}
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         DESTINATION ${INCLUDE_INSTALL_DIR})
 
