@@ -88,7 +88,7 @@ else ()
 endif (BUILD_SHARED)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC TRISTAN_DEBUG)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG_MODE)
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 if (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
