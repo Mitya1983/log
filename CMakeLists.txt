@@ -4,16 +4,10 @@ project(Log LANGUAGES CXX DESCRIPTION "Simple logging lib in C++")
 
 set(CMAKE_CXX_STANDARD 20)
 
-option(BUILD_SHARED "" ON)
 option(BUILD_STATIC "" OFF)
 option(DOCS "Generate documentation" OFF)
 option(GENERATE_DEB_PACKAGE "" OFF)
 option(ENABLE_ASAN "Enables asan build. Works only with clang and in debug build" OFF)
-
-if (${BUILD_STATIC})
-    message(STATUS "Static library is enabled - switching off shared one")
-    set(BUILD_SHARED OFF)
-endif (${BUILD_STATIC})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using Clang
@@ -22,26 +16,26 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         if (${ENABLE_ASAN})
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
         endif ()
-    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    endif ()
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -O3")
-    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     # using GCC
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "-g -ggdb3 -O0 -Wall -Wextra -Wpedantic -Wfloat-equal -Werror")
-    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    endif ()
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -O3")
-    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # using Visual Studio C++
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "/Zi /Od /JMC /WX")
-    endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    endif ()
     if (CMAKE_BUILD_TYPE STREQUAL "Release")
         set(CMAKE_CXX_FLAGS "/Ot /O2")
-    endif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    endif ()
 else ()
     message(FATAL_ERROR "Compiler not supported")
 endif ()
@@ -69,27 +63,27 @@ if ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
     set(INSTALL_PREFIX "$ENV{HOME}")
 else ()
     set(INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-endif ("${CMAKE_INSTALL_PREFIX}" STREQUAL "")
+endif ()
 
 set(PROJECT_INSTALL_DIR ${INSTALL_PREFIX}/${PROJECT_NAME})
 set(LIBRARY_INSTALL_DIR ${PROJECT_INSTALL_DIR}/${CMAKE_BUILD_TYPE})
 message(STATUS "Library install directory is set to ${LIBRARY_INSTALL_DIR}")
 set(INCLUDE_INSTALL_DIR ${LIBRARY_INSTALL_DIR}/inc)
 message(STATUS "Include install directory is set to ${INCLUDE_INSTALL_DIR}")
-set(CMAKE_CONFIG_INSTALL_DIR ${INSTALL_PREFIX}/cmake/${CMAKE_BUILD_TYPE})
-message(STATUS "CMake config files install directory is set to ${CMAKE_CONFIG_INSTALL_DIR}")
+set(CONFIG_INSTALL_DIR ${INSTALL_PREFIX}/cmake/${CMAKE_BUILD_TYPE})
+message(STATUS "CMake config files install directory is set to ${CONFIG_INSTALL_DIR}")
 
-if (BUILD_SHARED)
-    message(STATUS "Will build shared library")
-    add_library(${PROJECT_NAME} SHARED)
-else ()
+if (${BUILD_STATIC})
     message(STATUS "Will build static library")
     add_library(${PROJECT_NAME} STATIC)
-endif (BUILD_SHARED)
+else ()
+    message(STATUS "Will build shared library")
+    add_library(${PROJECT_NAME} SHARED)
+endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG_MODE)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
+endif ()
 
 if (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     string(REPLACE "." ";" CLANG_VERSION ${CMAKE_CXX_COMPILER_VERSION})
@@ -107,7 +101,7 @@ if (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TY
     target_link_libraries(${PROJECT_NAME} PRIVATE
             -lclang_rt.asan-x86_64
             )
-endif (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+endif ()
 
 target_sources(
         ${PROJECT_NAME}
@@ -134,7 +128,7 @@ if (DOCS)
             ${PROJECT_SOURCE_DIR}/inc
             ALL
     )
-endif (DOCS)
+endif ()
 
 if (GENERATE_DEB_PACKAGE)
     add_custom_command(
@@ -143,13 +137,13 @@ if (GENERATE_DEB_PACKAGE)
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMAND cpack .
     )
-endif (GENERATE_DEB_PACKAGE)
+endif ()
 
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/PackageConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        INSTALL_DESTINATION ${CMAKE_CONFIG_INSTALL_DIR}
+        INSTALL_DESTINATION ${CONFIG_INSTALL_DIR}
         PATH_VARS INCLUDE_INSTALL_DIR LIBRARY_INSTALL_DIR)
 
 write_basic_package_version_file(
@@ -166,7 +160,7 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
         CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        DESTINATION ${CMAKE_CONFIG_INSTALL_DIR})
+        DESTINATION ${CONFIG_INSTALL_DIR})
 
 install(FILES
         ${INC_FILES}
