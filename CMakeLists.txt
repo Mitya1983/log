@@ -4,7 +4,7 @@ project(Log LANGUAGES CXX DESCRIPTION "Simple logging lib in C++")
 
 set(CMAKE_CXX_STANDARD 20)
 
-option(BUILD_STATIC "" OFF)
+option(BUILD_STATIC "" ON)
 option(DOCS "Generate documentation" OFF)
 option(GENERATE_DEB_PACKAGE "" OFF)
 option(ENABLE_ASAN "Enables asan build. Works only with clang and in debug build" OFF)
