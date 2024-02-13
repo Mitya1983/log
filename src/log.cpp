@@ -188,32 +188,32 @@ void Log::setFormatter(MessageType message_type, std::function< std::string(LogE
 void Log::write(LogEvent&& log_event) {
 
 #if defined(LOG_DISABLE_TRACE)
-    if (message_type == MessageType::Trace) {
+    if (log_event.message_type == MessageType::Trace) {
         return;
     }
 #endif
 #if defined(LOG_DISABLE_DEBUG)
-    if (message_type == MessageType::Debug) {
+    if (log_event.message_type == MessageType::Debug) {
         return;
     }
 #endif
 #if defined(LOG_DISABLE_ERROR)
-    if (message_type == MessageType::Error) {
+    if (log_event.message_type == MessageType::Error) {
         return;
     }
 #endif
 #if defined(LOG_DISABLE_WARNING)
-    if (message_type == MessageType::Warning) {
+    if (log_event.message_type == MessageType::Warning) {
         return;
     }
 #endif
 #if defined(LOG_DISABLE_INFO)
-    if (message_type == MessageType::Info) {
+    if (log_event.message_type == MessageType::Info) {
         return;
     }
 #endif
 #if defined(LOG_DISABLE_FATAL)
-    if (message_type == MessageType::Fatal) {
+    if (log_event.message_type == MessageType::Fatal) {
         return;
     }
 #endif
