@@ -46,6 +46,12 @@ if (PROJECT_IS_TOP_LEVEL)
     # TODO: If so download files
     # TODO: Check if IpcLock project got any changes
     # TODO: If so update files
+    file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
+            inc/private/*.hpp
+    )
+    file(GLOB PRIVATE_SRC_FILES CONFIGURE_DEPENDS
+            inc/private/*.cpp
+    )
 endif ()
 
 include_directories(
@@ -55,9 +61,6 @@ include_directories(
 
 file(GLOB INC_FILES CONFIGURE_DEPENDS
         inc/*.hpp
-        )
-file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
-        inc/private/*.hpp
         )
 file(GLOB SRC_FILES CONFIGURE_DEPENDS
         src/*.cpp
