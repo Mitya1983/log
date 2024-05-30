@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.21)
 
 project(Log LANGUAGES CXX DESCRIPTION "Simple logging lib in C++")
 
@@ -38,6 +38,14 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     endif ()
 else ()
     message(FATAL_ERROR "Compiler not supported")
+endif ()
+
+if (PROJECT_IS_TOP_LEVEL)
+
+    # TODO: Check if DateTime project got any changes
+    # TODO: If so download files
+    # TODO: Check if IpcLock project got any changes
+    # TODO: If so update files
 endif ()
 
 include_directories(
