@@ -1,6 +1,5 @@
 #include "log.hpp"
 #include "ipc_lock.hpp"
-#include "date_time.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -251,14 +250,14 @@ namespace {
 
     auto traceFormatter(const LogEvent& log_event) -> std::string {
         std::stringstream l_stringstream;
-        l_stringstream << log_event.thread_id << " | " << *log_event.time_point << " | " << log_event.module_name << " | " << log_event.function_name << " | "
+        l_stringstream << log_event.thread_id << " | " << log_event.time_point << " | " << log_event.module_name << " | " << log_event.function_name << " | "
                        << log_event.message;
         return l_stringstream.str();
     }
 
     auto debugFormatter(const LogEvent& log_event) -> std::string {
         std::stringstream l_stringstream;
-        l_stringstream << *log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+        l_stringstream << log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
                        << log_event.module_name << " | "
                        << "MESSAGE: " << log_event.message << " | FUNCTION: " << log_event.function_name
                        << " | FILE: " << std::filesystem::path(log_event.file_name).filename() << " | LINE: " << log_event.line;
@@ -272,7 +271,7 @@ namespace {
     auto infoFormatter(const LogEvent& log_event) -> std::string {
         std::stringstream l_stringstream;
 
-        l_stringstream << *log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
+        l_stringstream << log_event.time_point << " | " << std::left << std::setw(g_message_type_output_width) << log_event.message_type_string << " | "
                        << log_event.module_name << " | "
                        << "MESSAGE: " << log_event.message;
         return l_stringstream.str();
@@ -282,11 +281,11 @@ namespace {
 }  // End of unnamed namespace
 
 LogEvent::LogEvent(std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line) :
+    time_point(tristan::time::Precision::NANOSECONDS),
     message(std::move(p_message)),
     function_name(std::move(p_function_name)),
     file_name(std::move(p_file_name)),
     line(std::to_string(p_line)),
-    time_point(std::make_unique< tristan::date_time::DateTime >(tristan::time::Precision::NANOSECONDS)),
     thread_id(std::this_thread::get_id()),
     message_type(p_message_type) { }
 
