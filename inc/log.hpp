@@ -1,6 +1,8 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
+#include <date_time.hpp>
+
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -12,10 +14,6 @@
 #include <variant>
 #include <vector>
 #include <source_location>
-
-namespace tristan::date_time {
-    class DateTime;
-} //End of tristan::time namespace
 
 namespace tristan::log {
 
@@ -168,8 +166,7 @@ namespace tristan::log {
          * second parameter \param object std::shared_ptr\<Object\> \param functor
          * void (Object::*functor)(const std::string&)
          */
-        template < class Object >
-        void setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&));
+        template < class Object > void setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&));
 
         /**
          * \overload
@@ -178,8 +175,7 @@ namespace tristan::log {
          * second parameter \param object Object* \param functor void
          * (Object::*functor)(const std::string&)
          */
-        template < class Object >
-        void setGlobalOutput(Object* object, void (Object::*functor)(const std::string&));
+        template < class Object > void setGlobalOutput(Object* object, void (Object::*functor)(const std::string&));
 
         /**
          * \brief Sets output for specified message type.
@@ -212,10 +208,7 @@ namespace tristan::log {
          * \param object std::shared_ptr\<Object\>
          * \param functor void (Object::*functor)(const std::string&)
          */
-        template < class Object >
-        void setOutput(MessageType message_type,
-                       std::weak_ptr< Object > object,
-                       void (Object::*functor)(const std::string&));
+        template < class Object > void setOutput(MessageType message_type, std::weak_ptr< Object > object, void (Object::*functor)(const std::string&));
 
         /**
          * \overload
@@ -224,8 +217,7 @@ namespace tristan::log {
          * \param message_type MessageType \param object Object*
          * \param functor void (Object::*functor)(const std::string&)
          */
-        template < class Object >
-        void setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&));
+        template < class Object > void setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&));
 
         /**
          * \brief Sets formatter for all message types.
@@ -240,9 +232,7 @@ namespace tristan::log {
          * \param object std::shared_ptr\<Object\>
          * \param functor void (Object::*functor)(LogEvent&&)
          */
-        template < class Object >
-        void setGlobalFormatter(std::weak_ptr< Object > object,
-                                std::string (Object::*functor)(LogEvent&& log_event));
+        template < class Object > void setGlobalFormatter(std::weak_ptr< Object > object, std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \overload
@@ -251,16 +241,14 @@ namespace tristan::log {
          * \param object Object*
          * \param functor void (Object::*functor)(LogEvent&&)
          */
-        template < class Object >
-        void setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event));
+        template < class Object > void setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \brief Sets formatter for specified message type.
          * \param message_type MessageType
          * \param formatter std::function\<std::string(LogEvent&&)\>
          */
-        void setFormatter(MessageType message_type,
-                          std::function< std::string(LogEvent&& log_event) >&& formatter);
+        void setFormatter(MessageType message_type, std::function< std::string(LogEvent&& log_event) >&& formatter);
 
         /**
          * \overload
@@ -271,9 +259,7 @@ namespace tristan::log {
          * \param functor void (Object::*functor)(LogEvent&&)
          */
         template < class Object >
-        void setFormatter(MessageType message_type,
-                          std::weak_ptr< Object > object,
-                          std::string (Object::*functor)(LogEvent&& log_event));
+        void setFormatter(MessageType message_type, std::weak_ptr< Object > object, std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \overload
@@ -283,10 +269,7 @@ namespace tristan::log {
          * \param object Object*
          * \param functor void (Object::*functor)(LogEvent&&)
          */
-        template < class Object >
-        void setFormatter(MessageType message_type,
-                          Object* object,
-                          std::string (Object::*functor)(LogEvent&& log_event));
+        template < class Object > void setFormatter(MessageType message_type, Object* object, std::string (Object::*functor)(LogEvent&& log_event));
 
         /**
          * \brief Writes log message of preset format to preset output.
@@ -321,11 +304,7 @@ namespace tristan::log {
          * \internal
          * \brief Stores output for each message type.
          */
-        std::vector< std::variant< std::monostate,
-                                   std::ostream*,
-                                   std::filesystem::path,
-                                   std::function< void(const std::string&) > > >
-            m_outputs;
+        std::vector< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > > > m_outputs;
 
         /**
          * \internal
@@ -334,8 +313,7 @@ namespace tristan::log {
         std::vector< std::function< std::string(LogEvent&& log_event) > > m_formatters;
     };
 
-    template < class Object >
-    void Log::setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
+    template < class Object > void Log::setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
         for (auto& output: m_outputs) {
             output = [object, functor](const std::string& message) {
                 if (auto l_object = object.lock()) {
@@ -345,8 +323,7 @@ namespace tristan::log {
         }
     }
 
-    template < class Object >
-    void Log::setGlobalOutput(Object* object, void (Object::*functor)(const std::string&)) {
+    template < class Object > void Log::setGlobalOutput(Object* object, void (Object::*functor)(const std::string&)) {
         for (auto& output: m_outputs) {
             output = [object, functor](const std::string& message) {
                 std::invoke(functor, object, message);
@@ -354,10 +331,7 @@ namespace tristan::log {
         }
     }
 
-    template < class Object >
-    void Log::setOutput(MessageType message_type,
-                        std::weak_ptr< Object > object,
-                        void (Object::*functor)(const std::string&)) {
+    template < class Object > void Log::setOutput(MessageType message_type, std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
         m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
             if (auto l_object = object.lock()) {
                 std::invoke(functor, l_object, message);
@@ -365,18 +339,13 @@ namespace tristan::log {
         };
     }
 
-    template < class Object >
-    void Log::setOutput(MessageType message_type,
-                        Object* object,
-                        void (Object::*functor)(const std::string&)) {
+    template < class Object > void Log::setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&)) {
         m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
             std::invoke(functor, object, message);
         };
     }
 
-    template < class Object >
-    void Log::setGlobalFormatter(std::weak_ptr< Object > object,
-                                 std::string (Object::*functor)(LogEvent&& log_event)) {
+    template < class Object > void Log::setGlobalFormatter(std::weak_ptr< Object > object, std::string (Object::*functor)(LogEvent&& log_event)) {
         for (auto& formatter: m_formatters) {
             formatter = [object, functor](LogEvent&& log_event) -> std::string {
                 if (auto l_object = object.lock()) {
@@ -386,8 +355,7 @@ namespace tristan::log {
         }
     }
 
-    template < class Object >
-    void Log::setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event)) {
+    template < class Object > void Log::setGlobalFormatter(Object* object, std::string (Object::*functor)(LogEvent&& log_event)) {
         for (auto& formatter: m_formatters) {
             formatter = [object, functor](LogEvent&& log_event) -> std::string {
                 return std::invoke(functor, object, std::move(log_event));
@@ -396,9 +364,7 @@ namespace tristan::log {
     }
 
     template < class Object >
-    void Log::setFormatter(MessageType message_type,
-                           std::weak_ptr< Object > object,
-                           std::string (Object::*functor)(LogEvent&& log_event)) {
+    void Log::setFormatter(MessageType message_type, std::weak_ptr< Object > object, std::string (Object::*functor)(LogEvent&& log_event)) {
         m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) -> std::string {
             if (auto l_object = object.lock()) {
                 return std::invoke(functor, l_object, std::move(log_event));
@@ -406,24 +372,20 @@ namespace tristan::log {
         };
     }
 
-    template < class Object >
-    void Log::setFormatter(MessageType message_type,
-                           Object* object,
-                           std::string (Object::*functor)(LogEvent&& log_event)) {
+    template < class Object > void Log::setFormatter(MessageType message_type, Object* object, std::string (Object::*functor)(LogEvent&& log_event)) {
         m_formatters.at(static_cast< size_t >(message_type)) = [object, functor](LogEvent&& log_event) -> std::string {
             return std::invoke(functor, object, std::move(log_event));
         };
     }
 
     struct LogEvent {
+        tristan::date_time::DateTime time_point;
         std::string message_type_string;
         std::string module_name;
         std::string message;
         std::string function_name;
         std::string file_name;
         std::string line;
-
-        std::unique_ptr<tristan::date_time::DateTime> time_point;
         std::thread::id thread_id;
 
         MessageType message_type;
@@ -436,14 +398,20 @@ namespace tristan::log {
          * \param p_file_name std::string
          * \param p_line int
          */
-        LogEvent(std::string p_message,
-                 MessageType p_message_type,
-                 std::string p_function_name,
-                 std::string p_file_name,
-                 uint32_t p_line);
-        LogEvent(std::string p_message,
-                 MessageType p_message_type,
-                 std::source_location p_source_location);
+        LogEvent(std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        /**
+         * \param p_message std::string
+         * \param p_message_type MessageType
+         * \param p_source_location std::source_location
+         */
+        LogEvent(std::string p_message, MessageType p_message_type, std::source_location p_source_location);
+
+        LogEvent(const LogEvent& other) = delete;
+        LogEvent(LogEvent&& other) = default;
+
+        LogEvent& operator=(const LogEvent& other) = delete;
+        LogEvent& operator=(LogEvent&& other) = default;
+
         ~LogEvent();
     };
 
