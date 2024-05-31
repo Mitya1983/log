@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(BUILD_STATIC "" ON)
 option(DOCS "Generate documentation" OFF)
-option(GENERATE_DEB_PACKAGE "" OFF)
 option(ENABLE_ASAN "Enables asan build" OFF)
 
 if (PROJECT_IS_TOP_LEVEL)
@@ -158,45 +157,3 @@ if (DOCS)
             ALL
     )
 endif ()
-
-if (GENERATE_DEB_PACKAGE)
-    add_custom_command(
-            TARGET ${PROJECT_NAME}
-            POST_BUILD
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMAND cpack .
-    )
-endif ()
-
-include(CMakePackageConfigHelpers)
-
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/PackageConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        INSTALL_DESTINATION ${CONFIG_INSTALL_DIR}
-        PATH_VARS INCLUDE_INSTALL_DIR LIBRARY_INSTALL_DIR)
-
-write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-        VERSION ${LIB_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-
-install(TARGETS ${PROJECT_NAME}
-        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        LIBRARY DESTINATION ${LIBRARY_INSTALL_DIR})
-
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        DESTINATION ${CONFIG_INSTALL_DIR})
-
-install(FILES
-        ${INC_FILES}
-        CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        DESTINATION ${INCLUDE_INSTALL_DIR})
-
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_NAME "Log")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "tristan.it@outlook.com")
-include(CPack)
