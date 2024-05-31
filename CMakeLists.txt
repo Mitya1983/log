@@ -43,18 +43,30 @@ if (PROJECT_IS_TOP_LEVEL)
     else ()
         message(FATAL_ERROR "Compiler not supported")
     endif ()
-    # TODO: Check if DateTime project got any changes
-    # TODO: If so download files
-    # TODO: Check if IpcLock project got any changes
-    # TODO: If so update files
-    include_directories(
-            inc/private
+    include(FetchContent)
+    FetchContent_Declare(
+            date-time
+            GIT_REPOSITORY https://github.com/Mitya1983/date-time.git
+            GIT_TAG origin/release
     )
+    FetchContent_MakeAvailable(date-time)
+    FetchContent_Declare(
+            ipc-lock
+            GIT_REPOSITORY https://github.com/Mitya1983/ipc-lock.git
+            GIT_TAG origin/release
+    )
+    FetchContent_MakeAvailable(ipc-lock)
     file(GLOB PRIVATE_INC_FILES CONFIGURE_DEPENDS
-            inc/private/*.hpp
+            ${CMAKE_CURRENT_BINARY_DIR}/_deps/ipc-lock-src/inc/*.hpp
+            ${CMAKE_CURRENT_BINARY_DIR}/_deps/date-time-src/inc/*.hpp
     )
     file(GLOB PRIVATE_SRC_FILES CONFIGURE_DEPENDS
-            inc/private/*.cpp
+            ${CMAKE_CURRENT_BINARY_DIR}/_deps/ipc-lock-src/src/*.cpp
+            ${CMAKE_CURRENT_BINARY_DIR}/_deps/date-time-src/src/*.cpp
+    )
+    include_directories(
+        ${CMAKE_CURRENT_BINARY_DIR}/_deps/ipc-lock-src/inc
+        ${CMAKE_CURRENT_BINARY_DIR}/_deps/date-time-src/inc
     )
 endif ()
 
