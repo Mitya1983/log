@@ -129,7 +129,7 @@ namespace mt::log {
      * defined callbacks. That is it is a user obligation to handle multi-threaded
      * calls of provided callback function.
      */
-    template < class IPCMutex, class ThreadMutex = std::mutex > class Log {
+    template < class IPCMutex = std::mutex, class ThreadMutex = std::mutex > class Log {
     public:
         Log() {
             m_message_types.emplace_back("TRACE");
