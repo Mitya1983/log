@@ -41,7 +41,7 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
         return formatter(*this);
     }
 #if defined __cpp_lib_format
-    return std::format("{}|{}|{}|{}|{}|{}|{}", time_point, message_type_string, module_name, message, function_name, file_name, line);
+    return std::format("{}|{}|{}|{}|{}|{}|{}\n", time_point, message_type_string, module_name, message, function_name, file_name, line);
 #endif
     const auto time = std::chrono::system_clock::to_time_t(time_point);
     auto [tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst, tm_gmtoff, tm_zone] = *std::gmtime(&time);
@@ -56,5 +56,5 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     string_time += std::to_string(tm_min);
     string_time += ':';
     string_time += std::to_string(tm_sec);
-    return {string_time + " | " + message_type_string + " | " + module_name + " | " + message + " | " + function_name + " | " + file_name + " | " + line};
+    return {string_time + " | " + message_type_string + " | " + module_name + " | " + message + " | " + function_name + " | " + file_name + " | " + line + '\n'};
 }

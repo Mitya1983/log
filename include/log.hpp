@@ -371,9 +371,13 @@ namespace mt::log {
             const auto message_type_index = static_cast< uint64_t >(log_event.message_type);
             log_event.message_type_string = m_message_types.at(message_type_index);
             log_event.module_name = m_module_name;
-            auto formatter = m_formatters.at(message_type_index);
             std::string msg = std::to_string(processID()) + "-" + std::to_string(message_index) + ": ";
-            msg += log_event.toString(m_formatters.at(message_type_index));
+            if (not m_formatters.empty()) {
+                const auto formatter = m_formatters.at(message_type_index);
+                msg += log_event.toString(formatter);
+            } else {
+                msg += log_event.toString();
+            }
             std::visit(
                 [this, &msg]< typename DestinationType >(DestinationType&& arg) -> void {
                     using T = std::decay_t< DestinationType >;
@@ -383,19 +387,19 @@ namespace mt::log {
                     } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                         std::scoped_lock lock(m_mutex);
                         if (m_ipc_mutex != std::nullopt) {
-                            m_ipc_mutex.lock();
+                            m_ipc_mutex.value().lock();
                         }
                         std::ofstream file(arg, std::ios::app);
                         if (not file.is_open()) {
                             if (m_ipc_mutex != std::nullopt) {
-                                m_ipc_mutex.unlock();
+                                m_ipc_mutex.value().unlock();
                             }
                             throw std::fstream::failure("Could not open Log file for writing - ", std::error_code(errno, std::system_category()));
                         }
                         file.write(msg.data(), std::ssize(msg));
                         file.close();
                         if (m_ipc_mutex != std::nullopt) {
-                            m_ipc_mutex.unlock();
+                            m_ipc_mutex.value().unlock();
                         }
                     } else if constexpr (std::is_same_v< T, std::function< void(const std::string&) > >) {
                         arg(msg);
