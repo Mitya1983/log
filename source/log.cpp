@@ -45,9 +45,9 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
 #endif
     const auto time = std::chrono::system_clock::to_time_t(time_point);
     auto [tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst, tm_gmtoff, tm_zone] = *std::gmtime(&time);
-    std::string string_time = std::to_string(tm_year);
+    std::string string_time = std::to_string(tm_year + 1900);
     string_time += '-';
-    string_time += std::to_string(tm_mon);
+    string_time += std::to_string(tm_mon + 1);
     string_time += '-';
     string_time += std::to_string(tm_mday);
     string_time += 'T';

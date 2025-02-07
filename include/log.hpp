@@ -13,6 +13,7 @@
 #include <variant>
 #include <vector>
 #include <source_location>
+
 namespace mt::log {
 
     auto processID() -> uint64_t;
@@ -126,7 +127,7 @@ namespace mt::log {
      *
      * \attention Write function is thread safe when output is set either to
      * std::ostream or to std::filesystem::path and not thread safe in case of user
-     * defined callbacks. That is it is a user obligation to handle multi-threaded
+     * defined callbacks. That is, it is a user obligation to handle multi-threaded
      * calls of provided callback function.
      */
     template < class IPCMutex = std::mutex, class ThreadMutex = std::mutex > class Log {
@@ -151,8 +152,10 @@ namespace mt::log {
         Log(Log&&) = delete;
         Log& operator=(const Log&) = delete;
         Log& operator=(Log&&) = delete;
-
-        void setIpcMutex(IPCMutex&& p_ipc_mutex) { m_ipc_mutex = std::move(p_ipc_mutex); }
+        template <typename... Args>
+        void setIpcMutex(Args... args) {
+            m_ipc_mutex.emplace(std::forward<Args...>(args...));
+        }
 
         /**
          * \brief Sets module name
