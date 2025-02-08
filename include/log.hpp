@@ -4,7 +4,6 @@
 #include <mutex>
 #include <filesystem>
 #include <functional>
-#include <optional>
 #include <ostream>
 #include <fstream>
 #include <iostream>
@@ -146,16 +145,26 @@ namespace mt::log {
             m_outputs.emplace_back(&std::cout);
             m_outputs.emplace_back(&std::cout);
             m_outputs.emplace_back(&std::cout);
+
+            m_formatters.resize(6);
+        }
+
+        explicit Log(IPCMutex& p_mutex_ref) :
+            Log() {
+            m_ipc_mutex = p_mutex_ref;
+        }
+
+        explicit Log(IPCMutex* p_mutex_ptr) :
+            Log() {
+            m_ipc_mutex = p_mutex_ptr;
         }
 
         Log(const Log&) = delete;
         Log(Log&&) = delete;
         Log& operator=(const Log&) = delete;
         Log& operator=(Log&&) = delete;
-        template <typename... Args>
-        void setIpcMutex(Args... args) {
-            m_ipc_mutex.emplace(std::forward<Args...>(args...));
-        }
+
+        template < typename... Args > void initIpcMutex(Args... args) { m_ipc_mutex.template emplace< IPCMutex >(std::forward< Args... >(args...)); }
 
         /**
          * \brief Sets module name
@@ -389,21 +398,51 @@ namespace mt::log {
                         arg->write(msg.data(), std::ssize(msg));
                     } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                         std::scoped_lock lock(m_mutex);
-                        if (m_ipc_mutex != std::nullopt) {
-                            m_ipc_mutex.value().lock();
-                        }
+                        std::visit(
+                            []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
+                                if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
+                                    if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
+                                        l_mutex.get().lock();
+                                    } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
+                                        l_mutex->lock();
+                                    } else {
+                                        l_mutex.lock();
+                                    }
+                                }
+                            },
+                            m_ipc_mutex);
                         std::ofstream file(arg, std::ios::app);
                         if (not file.is_open()) {
-                            if (m_ipc_mutex != std::nullopt) {
-                                m_ipc_mutex.value().unlock();
-                            }
+                            std::visit(
+                                []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
+                                    if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
+                                        if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
+                                            l_mutex.get().unlock();
+                                        } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
+                                            l_mutex->unlock();
+                                        } else {
+                                            l_mutex.unlock();
+                                        }
+                                    }
+                                },
+                                m_ipc_mutex);
                             throw std::fstream::failure("Could not open Log file for writing - ", std::error_code(errno, std::system_category()));
                         }
                         file.write(msg.data(), std::ssize(msg));
                         file.close();
-                        if (m_ipc_mutex != std::nullopt) {
-                            m_ipc_mutex.value().unlock();
-                        }
+                        std::visit(
+                            []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
+                                if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
+                                    if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
+                                        l_mutex.get().unlock();
+                                    } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
+                                        l_mutex->unlock();
+                                    } else {
+                                        l_mutex.unlock();
+                                    }
+                                }
+                            },
+                            m_ipc_mutex);
                     } else if constexpr (std::is_same_v< T, std::function< void(const std::string&) > >) {
                         arg(msg);
                     }
@@ -416,7 +455,8 @@ namespace mt::log {
 
     private:
         ThreadMutex m_mutex;
-        std::optional< IPCMutex > m_ipc_mutex{std::nullopt};
+        std::variant< std::monostate, std::reference_wrapper< IPCMutex >, IPCMutex*, IPCMutex > m_ipc_mutex;
+        // std::optional< IPCMutex > m_ipc_mutex{std::nullopt};
         std::string m_module_name;
 
         /**
