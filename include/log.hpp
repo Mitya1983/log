@@ -429,6 +429,7 @@ namespace mt::log {
                             throw std::fstream::failure("Could not open Log file for writing - ", std::error_code(errno, std::system_category()));
                         }
                         file.write(msg.data(), std::ssize(msg));
+                        file.flush();
                         file.close();
                         std::visit(
                             []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
