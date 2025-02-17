@@ -34,6 +34,18 @@ LogEvent::LogEvent(std::string p_message, const MessageType p_message_type, std:
 LogEvent::LogEvent(std::string p_message, const MessageType p_message_type, const std::source_location p_source_location) :
     LogEvent(std::move(p_message), p_message_type, p_source_location.function_name(), p_source_location.file_name(), p_source_location.line()) { }
 
+LogEvent::LogEvent(std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line) :
+    LogEvent(std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
+
+LogEvent::LogEvent(std::string_view p_message, MessageType p_message_type, std::source_location p_source_location) :
+    LogEvent(std::string{p_message}, p_message_type, p_source_location) { }
+
+LogEvent::LogEvent(const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line) :
+    LogEvent(std::string_view{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
+
+LogEvent::LogEvent(const char* p_message, MessageType p_message_type, std::source_location p_source_location) :
+    LogEvent(std::string_view{p_message}, p_message_type, p_source_location) { }
+
 LogEvent::~LogEvent() = default;
 
 auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& formatter) const -> std::string {
@@ -56,5 +68,6 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     string_time += std::to_string(tm_min);
     string_time += ':';
     string_time += std::to_string(tm_sec);
-    return {string_time + " | " + message_type_string + " | " + module_name + " | " + message + " | " + function_name + " | " + file_name + " | " + line + '\n'};
+    return {string_time + " | " + message_type_string + " | " + module_name + " | " + message + " | " + function_name + " | " + file_name + " | " + line
+            + '\n'};
 }

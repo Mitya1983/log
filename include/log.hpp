@@ -31,21 +31,12 @@ namespace mt::log {
     };
 
     struct LogEvent {
-        /**
-         *
-         * \param p_message std::string
-         * \param p_message_type tristan::log::MessageType
-         * \param p_function_name std::string
-         * \param p_file_name std::string
-         * \param p_line int
-         */
         LogEvent(std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        /**
-         * \param p_message std::string
-         * \param p_message_type MessageType
-         * \param p_source_location std::source_location
-         */
         LogEvent(std::string p_message, MessageType p_message_type, std::source_location p_source_location);
+        LogEvent(std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        LogEvent(std::string_view p_message, MessageType p_message_type, std::source_location p_source_location);
+        LogEvent(const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        LogEvent(const char* p_message, MessageType p_message_type, std::source_location p_source_location);
 
         LogEvent(const LogEvent& other) = delete;
         LogEvent(LogEvent&& other) = default;
