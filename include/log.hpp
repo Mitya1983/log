@@ -4,11 +4,9 @@
 #include <mutex>
 #include <filesystem>
 #include <functional>
-#include <ostream>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <variant>
 #include <vector>
 #include <source_location>
@@ -49,13 +47,12 @@ namespace mt::log {
         [[nodiscard]] auto toString(const std::function< std::string(const LogEvent&) >& formatter = {}) const -> std::string;
 
         std::chrono::time_point< std::chrono::system_clock > time_point;
-        std::string message_type_string;
         std::string module_name;
+        std::string message_type_string;
         std::string message;
         std::string function_name;
         std::string file_name;
         std::string line;
-        std::thread::id thread_id;
 
         MessageType message_type;
     };
@@ -120,7 +117,7 @@ namespace mt::log {
      * defined callbacks. That is, it is a user obligation to handle multi-threaded
      * calls of provided callback function.
      */
-    template < class IPCMutex = std::mutex, class ThreadMutex = std::mutex > class Log {
+    template < class Mutex = std::mutex > class Log {
     public:
         Log() {
             m_message_types.emplace_back("TRACE");
@@ -140,49 +137,12 @@ namespace mt::log {
             m_formatters.resize(6);
         }
 
-        explicit Log(IPCMutex& p_mutex_ref) :
-            Log() {
-            m_ipc_mutex = p_mutex_ref;
-        }
-
-        explicit Log(IPCMutex* p_mutex_ptr) :
-            Log() {
-            m_ipc_mutex = p_mutex_ptr;
-        }
-
         Log(const Log&) = delete;
         Log(Log&&) = delete;
         Log& operator=(const Log&) = delete;
         Log& operator=(Log&&) = delete;
 
-        template < typename... Args > void initIpcMutex(Args... args) { m_ipc_mutex.template emplace< IPCMutex >(std::forward< Args... >(args...)); }
-
-        /**
-         * \brief Sets module name
-         * \param name std::string
-         */
-        void setModuleName(std::string name) { m_module_name = std::move(name); }
-
-        /**
-         * \brief Sets the string representation of MessageType.
-         *
-         * Default values are as follows:
-         * \li TRACE
-         * \li DEBUG
-         * \li ERROR
-         * \li WARNING
-         * \li INFO
-         * \li FATAL
-         *
-         * \param message_type MessageType
-         * \param value const std::string&
-         */
         void setMessageTypeOutput(MessageType message_type, const std::string& value) { m_message_types.at(static_cast< size_t >(message_type)) = value; }
-
-        /**
-         * \brief Sets output for all message types.
-         * \param output_stream std::ostream*
-         */
         void setGlobalOutput(std::ostream* output_stream) {
             for (auto& output: m_outputs) {
                 if (output_stream == nullptr) {
@@ -192,23 +152,11 @@ namespace mt::log {
                 }
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for all message types.
-         * \param file const std::filesystem::path&
-         */
         void setGlobalOutput(const std::filesystem::path& file) {
             for (auto& output: m_outputs) {
                 output = file;
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for all message types.
-         * \param output_func std::function\<void(const std::string&)\>&&
-         */
         void setGlobalOutput(std::function< void(const std::string&) >&& output_func) {
             for (auto& l_output: m_outputs) {
                 if (output_func == nullptr) {
@@ -218,14 +166,6 @@ namespace mt::log {
                 }
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for all message types.
-         * \tparam Object class which implements the function pointer passed as a
-         * second parameter \param object std::shared_ptr\<Object\> \param functor
-         * void (Object::*functor)(const std::string&)
-         */
         template < class Object > void setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
             for (auto& output: m_outputs) {
                 output = [object, functor](const std::string& message) {
@@ -235,14 +175,6 @@ namespace mt::log {
                 };
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for all message types.
-         * \tparam Object class which implements the function pointer passed as a
-         * second parameter \param object Object* \param functor void
-         * (Object::*functor)(const std::string&)
-         */
         template < class Object > void setGlobalOutput(Object* object, void (Object::*functor)(const std::string&)) {
             for (auto& output: m_outputs) {
                 output = [object, functor](const std::string& message) {
@@ -250,12 +182,6 @@ namespace mt::log {
                 };
             }
         }
-
-        /**
-         * \brief Sets output for specified message type.
-         * \param message_type MessageType
-         * \param output_stream std::ostream*
-         */
         void setOutput(MessageType message_type, std::ostream* output_stream) {
             if (output_stream == nullptr) {
                 m_outputs.at(static_cast< size_t >(message_type)) = std::monostate();
@@ -263,22 +189,7 @@ namespace mt::log {
                 m_outputs.at(static_cast< size_t >(message_type)) = output_stream;
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for specified message type.
-         * \param message_type MessageType
-         * \param file const std::filesystem::path&
-         */
-
         void setOutput(MessageType message_type, const std::filesystem::path& file) { m_outputs.at(static_cast< size_t >(message_type)) = file; }
-
-        /**
-         * \overload
-         * \brief Sets output for specified message type.
-         * \param message_type MessageType
-         * \param output_func std::function\<void(const std::string&)\>&&
-         */
         void setOutput(MessageType message_type, std::function< void(const std::string&) >&& output_func) {
             if (output_func == nullptr) {
                 m_outputs.at(static_cast< size_t >(message_type)) = std::monostate();
@@ -286,15 +197,6 @@ namespace mt::log {
                 m_outputs.at(static_cast< size_t >(message_type)) = output_func;
             }
         }
-
-        /**
-         * \overload
-         * \brief Sets output for specified message type.
-         * \tparam Object class which implements the function pointer passed as a second parameter
-         * \param message_type MessageType
-         * \param object std::shared_ptr\<Object\>
-         * \param functor void (Object::*functor)(const std::string&)
-         */
         template < class Object > void setOutput(MessageType message_type, std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
             m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
                 if (auto l_object = object.lock()) {
@@ -302,43 +204,19 @@ namespace mt::log {
                 }
             };
         }
-
-        /**
-         * \overload
-         * \brief Sets output for specified message type.
-         * \tparam Object class which implements the function pointer passed as a second parameter
-         * \param message_type MessageType \param object Object*
-         * \param functor void (Object::*functor)(const std::string&)
-         */
         template < class Object > void setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&)) {
             m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
                 std::invoke(functor, object, message);
             };
         }
-
-        /**
-         * \brief Sets formatter for all message types.
-         * \param formatter std::function\<std::string(LogEvent&&)\>
-         */
         void setGlobalFormatter(std::function< std::string(const LogEvent& log_event) >&& formatter) {
             for (auto& l_formatter: m_formatters) {
                 l_formatter = formatter;
             }
         }
-
-        /**
-         * \brief Sets formatter for specified message type.
-         * \param message_type MessageType
-         * \param formatter std::function\<std::string(LogEvent&&)\>
-         */
         void setFormatter(MessageType message_type, std::function< std::string(const LogEvent& log_event) >&& formatter) {
             m_formatters.at(static_cast< size_t >(message_type)) = formatter;
         }
-
-        /**
-         * \brief Writes log message of preset format to preset output.
-         * \param log_event LogEvent&&
-         */
         void write(LogEvent&& log_event) {
 #if defined(LOG_DISABLE_TRACE)
             if (log_event.message_type == MessageType::Trace) {
@@ -373,8 +251,11 @@ namespace mt::log {
             static int32_t message_index{0};
             const auto message_type_index = static_cast< uint64_t >(log_event.message_type);
             log_event.message_type_string = m_message_types.at(message_type_index);
-            log_event.module_name = m_module_name;
-            std::string msg = std::to_string(processID()) + "-" + std::to_string(message_index) + ": ";
+            std::string msg;
+            if (m_include_proc_id) {
+                msg += std::to_string(processID()) + "-";
+            }
+            msg += std::to_string(message_index) + ": ";
             if (not m_formatters.empty()) {
                 const auto formatter = m_formatters.at(message_type_index);
                 msg += log_event.toString(formatter);
@@ -389,52 +270,13 @@ namespace mt::log {
                         arg->write(msg.data(), std::ssize(msg));
                     } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                         std::scoped_lock lock(m_mutex);
-                        std::visit(
-                            []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
-                                if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
-                                    if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
-                                        l_mutex.get().lock();
-                                    } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
-                                        l_mutex->lock();
-                                    } else {
-                                        l_mutex.lock();
-                                    }
-                                }
-                            },
-                            m_ipc_mutex);
                         std::ofstream file(arg, std::ios::app);
                         if (not file.is_open()) {
-                            std::visit(
-                                []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
-                                    if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
-                                        if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
-                                            l_mutex.get().unlock();
-                                        } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
-                                            l_mutex->unlock();
-                                        } else {
-                                            l_mutex.unlock();
-                                        }
-                                    }
-                                },
-                                m_ipc_mutex);
                             throw std::fstream::failure("Could not open Log file for writing - ", std::error_code(errno, std::system_category()));
                         }
                         file.write(msg.data(), std::ssize(msg));
                         file.flush();
                         file.close();
-                        std::visit(
-                            []< typename IpcMutexType >(IpcMutexType&& l_mutex) -> void {
-                                if constexpr (not std::is_same_v< std::decay_t< IpcMutexType >, std::monostate >) {
-                                    if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, std::reference_wrapper< IPCMutex > >) {
-                                        l_mutex.get().unlock();
-                                    } else if constexpr (std::is_same_v< std::decay_t< IpcMutexType >, IPCMutex* >) {
-                                        l_mutex->unlock();
-                                    } else {
-                                        l_mutex.unlock();
-                                    }
-                                }
-                            },
-                            m_ipc_mutex);
                     } else if constexpr (std::is_same_v< T, std::function< void(const std::string&) > >) {
                         arg(msg);
                     }
@@ -446,28 +288,13 @@ namespace mt::log {
         ~Log() = default;
 
     private:
-        ThreadMutex m_mutex;
-        std::variant< std::monostate, std::reference_wrapper< IPCMutex >, IPCMutex*, IPCMutex > m_ipc_mutex;
-        // std::optional< IPCMutex > m_ipc_mutex{std::nullopt};
-        std::string m_module_name;
+        Mutex m_mutex;
 
-        /**
-         * \internal
-         * \brief Stores string representations of message types.
-         */
         std::vector< std::string > m_message_types;
-
-        /**
-         * \internal
-         * \brief Stores output for each message type.
-         */
         std::vector< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > > > m_outputs;
-
-        /**
-         * \internal
-         * \brief Stores formatter functions for each message type.
-         */
         std::vector< std::function< std::string(const LogEvent& log_event) > > m_formatters;
+
+        bool m_include_proc_id{false};
     };
 
 }  // namespace mt::log
