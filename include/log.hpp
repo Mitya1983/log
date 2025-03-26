@@ -31,12 +31,12 @@ namespace mt::log {
     };
 
     struct LogEvent {
-        LogEvent(std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(std::string p_message, MessageType p_message_type, std::source_location p_source_location);
-        LogEvent(std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(std::string_view p_message, MessageType p_message_type, std::source_location p_source_location);
-        LogEvent(const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(const char* p_message, MessageType p_message_type, std::source_location p_source_location);
+        LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::source_location p_source_location);
+        LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::source_location p_source_location);
+        LogEvent(const char* p_module, const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
+        LogEvent(const char* p_module, const char* p_message, MessageType p_message_type, std::source_location p_source_location);
 
         LogEvent(const LogEvent& other) = delete;
         LogEvent(LogEvent&& other) = default;

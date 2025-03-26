@@ -22,8 +22,14 @@ auto mt::log::processID() -> uint64_t {
 #endif
 }
 
-LogEvent::LogEvent(std::string p_message, const MessageType p_message_type, std::string p_function_name, std::string p_file_name, const uint32_t p_line) :
+LogEvent::LogEvent(std::string p_module,
+                   std::string p_message,
+                   const MessageType p_message_type,
+                   std::string p_function_name,
+                   std::string p_file_name,
+                   const uint32_t p_line) :
     time_point(std::chrono::system_clock::now()),
+    module_name(std::move(p_module)),
     message(std::move(p_message)),
     function_name(std::move(p_function_name)),
     file_name(std::move(p_file_name)),
@@ -31,20 +37,35 @@ LogEvent::LogEvent(std::string p_message, const MessageType p_message_type, std:
     thread_id(std::this_thread::get_id()),
     message_type(p_message_type) { }
 
-LogEvent::LogEvent(std::string p_message, const MessageType p_message_type, const std::source_location p_source_location) :
-    LogEvent(std::move(p_message), p_message_type, p_source_location.function_name(), p_source_location.file_name(), p_source_location.line()) { }
+LogEvent::LogEvent(std::string p_module, std::string p_message, const MessageType p_message_type, const std::source_location p_source_location) :
+    LogEvent(std::move(p_module),
+             std::move(p_message),
+             p_message_type,
+             p_source_location.function_name(),
+             p_source_location.file_name(),
+             p_source_location.line()) { }
 
-LogEvent::LogEvent(std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line) :
-    LogEvent(std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
+LogEvent::LogEvent(std::string_view p_module,
+                   std::string_view p_message,
+                   MessageType p_message_type,
+                   std::string p_function_name,
+                   std::string p_file_name,
+                   uint32_t p_line) :
+    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
 
-LogEvent::LogEvent(std::string_view p_message, MessageType p_message_type, std::source_location p_source_location) :
-    LogEvent(std::string{p_message}, p_message_type, p_source_location) { }
+LogEvent::LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::source_location p_source_location) :
+    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, p_source_location) { }
 
-LogEvent::LogEvent(const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line) :
-    LogEvent(std::string_view{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
+LogEvent::LogEvent(const char* p_module,
+                   const char* p_message,
+                   MessageType p_message_type,
+                   std::string p_function_name,
+                   std::string p_file_name,
+                   uint32_t p_line) :
+    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
 
-LogEvent::LogEvent(const char* p_message, MessageType p_message_type, std::source_location p_source_location) :
-    LogEvent(std::string_view{p_message}, p_message_type, p_source_location) { }
+LogEvent::LogEvent(const char* p_module, const char* p_message, MessageType p_message_type, std::source_location p_source_location) :
+    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, p_source_location) { }
 
 LogEvent::~LogEvent() = default;
 
