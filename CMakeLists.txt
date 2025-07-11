@@ -96,14 +96,10 @@ if (${ENABLE_ASAN} AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TY
 
     execute_process(
             COMMAND find ${PATH_TO_CLANG_DIRECTORY} -name libclang_rt.asan-x86_64.so
-            OUTPUT_VARIABLE PATH_TO_CLANG_LIB_DIRECTORY
-    )
-    string(STRIP ${PATH_TO_CLANG_LIB_DIRECTORY} PATH_TO_CLANG_LIB_DIRECTORY)
-    target_link_directories(${PROJECT_NAME} PRIVATE
-            ${PATH_TO_CLANG_LIB_DIRECTORY}
+            OUTPUT_VARIABLE PATH_TO_CLANG_LIB_ASAN
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE
-            -lclang_rt.asan-x86_64
+                          ${PATH_TO_CLANG_LIB_ASAN}
     )
 endif ()
 
