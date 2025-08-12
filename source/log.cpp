@@ -79,7 +79,7 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     return std::format("{}|{}|{}|{}|{}|{}|{}\n", time_point, message_type_string, module_name, message, function_name, file_name, line);
 #endif
     const auto time = std::chrono::system_clock::to_time_t(time_point);
-    auto [tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst, tm_gmtoff, tm_zone] = *std::gmtime(&time);
+    auto [tm_sec, tm_min, tm_hour, tm_mday, tm_mon, tm_year, tm_wday, tm_yday, tm_isdst] = *std::gmtime(&time);
     std::string string_time = std::to_string(tm_year + 1900);
     string_time += '-';
     string_time += std::to_string(tm_mon + 1);
