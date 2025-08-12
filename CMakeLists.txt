@@ -19,7 +19,7 @@ if (${PROJECT_IS_TOP_LEVEL})
             endif ()
         endif ()
         if (CMAKE_BUILD_TYPE STREQUAL "Release")
-            set(CMAKE_CXX_FLAGS "-g0 -ggdb0 -glldb0 -O3")
+            set(CMAKE_CXX_FLAGS "-g0 -O3")
         endif ()
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # using GCC
