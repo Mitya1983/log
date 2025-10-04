@@ -1,7 +1,7 @@
 #include "log.hpp"
 #include <thread>
 
-#if (defined __linux) || (defined linux) || (defined __linux__) || (defined __OSX__) || (defined __APPLE__)
+#if (defined __linux) or (defined linux) or (defined __linux__) or (defined __OSX__) or (defined __APPLE__)
   #include <unistd.h>
 #else
   #define NOMINMAX
@@ -15,7 +15,7 @@
 using namespace mt::log;
 
 auto mt::log::processID() -> uint64_t {
-#if (defined __linux) || (defined linux) || (defined __linux__)
+#if defined(__linux) || defined(linux) || defined(__linux__) || defined(__APPLE__)
     return static_cast< uint64_t >(getpid());
 #else
     return static_cast< uint64_t >(GetCurrentProcessId());
@@ -75,9 +75,9 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     if (formatter) {
         return formatter(*this);
     }
-#if defined __cpp_lib_format
+#if defined __cpp_lib_format and not defined (__APPLE__)
     return std::format("{}|{}|{}|{}|{}|{}|{}\n", time_point, message_type_string, module_name, message, function_name, file_name, line);
-#endif
+#else
     const auto time = std::chrono::system_clock::to_time_t(time_point);
     auto tm_struct = *std::gmtime(&time);
     std::string string_time = std::to_string(tm_struct.tm_year + 1900);
@@ -93,4 +93,5 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     string_time += std::to_string(tm_struct.tm_sec);
     return {string_time + " | " + message_type_string + " | " + module_name + " | " + message + " | " + function_name + " | " + file_name + " | " + line
             + '\n'};
+#endif
 }
