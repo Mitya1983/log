@@ -45,7 +45,7 @@ namespace mt::log {
                   std::string p_function_name,
                   std::string p_file_name,
                   uint32_t p_line);
-        log_event(std::string_view p_module, std::string_view p_message, message_type p_message_type, std::source_location p_source_location);
+        log_event(std::string_view p_module, std::string_view p_message, enum message_type p_message_type, std::source_location p_source_location);
 
         log_event(const log_event& other) = delete;
         log_event(log_event&& other) = default;
@@ -65,7 +65,7 @@ namespace mt::log {
         std::string file_name;
         std::string line;
 
-        message_type message_type;
+        enum message_type message_type;
     };
 
     /**
