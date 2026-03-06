@@ -17,10 +17,10 @@ namespace mt::log {
     auto processID() -> uint64_t;
 
     /**
-     * \enum MessageType
+     * \enum message_type
      * \brief List of supported message types
      */
-    enum class MessageType : uint8_t {
+    enum class message_type : uint8_t {
         Trace,
         Debug,
         Error,
@@ -31,21 +31,31 @@ namespace mt::log {
 
     static constexpr uint8_t message_type_count = 6;
 
-    struct LogEvent {
-        LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::source_location p_source_location);
-        LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::source_location p_source_location);
+    struct log_event {
+        log_event(std::string p_module,
+                  std::string p_message,
+                  message_type p_message_type,
+                  std::string p_function_name,
+                  std::string p_file_name,
+                  uint32_t p_line);
+        log_event(std::string p_module, std::string p_message, message_type p_message_type, std::source_location p_source_location);
+        log_event(std::string_view p_module,
+                  std::string_view p_message,
+                  message_type p_message_type,
+                  std::string p_function_name,
+                  std::string p_file_name,
+                  uint32_t p_line);
+        log_event(std::string_view p_module, std::string_view p_message, message_type p_message_type, std::source_location p_source_location);
 
-        LogEvent(const LogEvent& other) = delete;
-        LogEvent(LogEvent&& other) = default;
+        log_event(const log_event& other) = delete;
+        log_event(log_event&& other) = default;
 
-        LogEvent& operator=(const LogEvent& other) = delete;
-        LogEvent& operator=(LogEvent&& other) = default;
+        log_event& operator=(const log_event& other) = delete;
+        log_event& operator=(log_event&& other) = default;
 
-        ~LogEvent() = default;
+        ~log_event() = default;
 
-        [[nodiscard]] auto toString(const std::function< std::string(const LogEvent&) >& formatter = {}) const -> std::string;
+        [[nodiscard]] auto to_string(const std::function< std::string(const log_event&) >& formatter = {}) const -> std::string;
 
         std::chrono::time_point< std::chrono::system_clock > time_point;
         std::string module_name;
@@ -55,11 +65,11 @@ namespace mt::log {
         std::string file_name;
         std::string line;
 
-        MessageType message_type;
+        message_type message_type;
     };
 
     /**
-     * \class Log
+     * \class log
      * \brief Implements logging logic and provides API for
      * customization.
      *
@@ -118,17 +128,18 @@ namespace mt::log {
      * defined callbacks. That is, it is a user obligation to handle multi-threaded
      * calls of provided callback function.
      */
-    template < class Mutex = std::mutex > class Log {
+    template < class mutex = std::mutex > class log {
     public:
-        Log() = default;
+        log() = default;
 
-        Log(const Log&) = delete;
-        Log(Log&&) = delete;
-        Log& operator=(const Log&) = delete;
-        Log& operator=(Log&&) = delete;
+        log(const log&) = delete;
+        log(log&&) = delete;
+        log& operator=(const log&) = delete;
+        log& operator=(log&&) = delete;
 
-        void setMessageTypeOutput(MessageType message_type, const std::string& value) { m_message_types.at(static_cast< size_t >(message_type)) = value; }
-        void setGlobalOutput(std::ostream* output_stream) {
+        void set_message_type_output(message_type message_type, const std::string& value) { m_message_types.at(static_cast< size_t >(message_type)) = value; }
+
+        void set_global_output(std::ostream* output_stream) {
             for (auto& output: m_outputs) {
                 if (output_stream == nullptr) {
                     output = std::monostate();
@@ -137,12 +148,14 @@ namespace mt::log {
                 }
             }
         }
-        void setGlobalOutput(const std::filesystem::path& file) {
+
+        void set_global_output(const std::filesystem::path& file) {
             for (auto& output: m_outputs) {
                 output = file;
             }
         }
-        void setGlobalOutput(std::function< void(const std::string&) >&& output_func) {
+
+        void set_global_output(std::function< void(const std::string&) >&& output_func) {
             for (auto& l_output: m_outputs) {
                 if (output_func == nullptr) {
                     l_output = std::monostate();
@@ -151,7 +164,8 @@ namespace mt::log {
                 }
             }
         }
-        template < class Object > void setGlobalOutput(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
+
+        template < class Object > void set_global_output(std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
             for (auto& output: m_outputs) {
                 output = [object, functor](const std::string& message) {
                     if (auto l_object = object.lock()) {
@@ -160,76 +174,85 @@ namespace mt::log {
                 };
             }
         }
-        template < class Object > void setGlobalOutput(Object* object, void (Object::*functor)(const std::string&)) {
+
+        template < class Object > void set_global_output(Object* object, void (Object::*functor)(const std::string&)) {
             for (auto& output: m_outputs) {
                 output = [object, functor](const std::string& message) {
                     std::invoke(functor, object, message);
                 };
             }
         }
-        void setOutput(MessageType message_type, std::ostream* output_stream) {
+
+        void set_output(message_type message_type, std::ostream* output_stream) {
             if (output_stream == nullptr) {
                 m_outputs.at(static_cast< size_t >(message_type)) = std::monostate();
             } else {
                 m_outputs.at(static_cast< size_t >(message_type)) = output_stream;
             }
         }
-        void setOutput(MessageType message_type, const std::filesystem::path& file) { m_outputs.at(static_cast< size_t >(message_type)) = file; }
-        void setOutput(MessageType message_type, std::function< void(const std::string&) >&& output_func) {
+
+        void set_output(message_type message_type, const std::filesystem::path& file) { m_outputs.at(static_cast< size_t >(message_type)) = file; }
+
+        void set_output(message_type message_type, std::function< void(const std::string&) >&& output_func) {
             if (output_func == nullptr) {
                 m_outputs.at(static_cast< size_t >(message_type)) = std::monostate();
             } else {
                 m_outputs.at(static_cast< size_t >(message_type)) = output_func;
             }
         }
-        template < class Object > void setOutput(MessageType message_type, std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
+
+        template < class Object > void set_output(message_type message_type, std::weak_ptr< Object > object, void (Object::*functor)(const std::string&)) {
             m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
                 if (auto l_object = object.lock()) {
                     std::invoke(functor, l_object, message);
                 }
             };
         }
-        template < class Object > void setOutput(MessageType message_type, Object* object, void (Object::*functor)(const std::string&)) {
+
+        template < class Object > void set_output(message_type message_type, Object* object, void (Object::*functor)(const std::string&)) {
             m_outputs.at(static_cast< size_t >(message_type)) = [object, functor](const std::string& message) {
                 std::invoke(functor, object, message);
             };
         }
-        void setGlobalFormatter(std::function< std::string(const LogEvent& log_event) >&& formatter) {
+
+        void set_global_formatter(std::function< std::string(const log_event& log_event) >&& formatter) {
             for (auto& l_formatter: m_formatters) {
                 l_formatter = formatter;
             }
         }
-        void setFormatter(MessageType message_type, std::function< std::string(const LogEvent& log_event) >&& formatter) {
+
+        void set_formatter(message_type message_type, std::function< std::string(const log_event& log_event) >&& formatter) {
             m_formatters.at(static_cast< size_t >(message_type)) = formatter;
         }
-        void write(LogEvent&& log_event) {
+
+        void write(log_event&& log_event) {
 #if defined(LOG_DISABLE_TRACE)
-            if (log_event.message_type == MessageType::Trace) {
+            if (log_event.message_type == message_type::Trace) {
                 return;
             }
 #endif
 #if defined(LOG_DISABLE_DEBUG)
-            if (log_event.message_type == MessageType::Debug) {
+            if (log_event.message_type == message_type::Debug) {
                 return;
             }
 #endif
 #if defined(LOG_DISABLE_ERROR)
-            if (log_event.message_type == MessageType::Error) {
+            if (log_event.message_type == message_type::Error) {
                 return;
             }
 #endif
 #if defined(LOG_DISABLE_WARNING)
-            if (log_event.message_type == MessageType::Warning) {
+            if (log_event.message_type == message_type::Warning) {
                 return;
             }
 #endif
 #if defined(LOG_DISABLE_INFO)
-            if (log_event.message_type == MessageType::Info) {
+            if (log_event.message_type == message_type::Info) {
                 return;
             }
 #endif
 #if defined(LOG_DISABLE_FATAL)
-            if (log_event.message_type == MessageType::Fatal) {
+            if (log_event.message_type == message_type::Fatal) {
                 return;
             }
 #endif
@@ -242,9 +265,9 @@ namespace mt::log {
             }
             msg += std::to_string(message_index) + ": ";
             if (const auto& formatter = m_formatters.at(message_type_index); formatter) {
-                msg += log_event.toString(formatter);
+                msg += log_event.to_string(formatter);
             } else {
-                msg += log_event.toString();
+                msg += log_event.to_string();
             }
             std::visit(
                 [this, &msg]< typename DestinationType >(DestinationType&& arg) -> void {
@@ -269,15 +292,15 @@ namespace mt::log {
                 m_outputs.at(message_type_index));
         }
 
-        ~Log() = default;
+        ~log() = default;
 
     private:
-        Mutex m_mutex;
+        mutex m_mutex;
 
         std::array< std::string, message_type_count > m_message_types{"TRACE", "DEBUG", "ERROR", "WARNING", "INFO", "FATAL"};
-        std::array< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > >, message_type_count > m_outputs{
-            &std::cout, &std::cout, &std::cout, &std::cout, &std::cout, &std::cout};
-        std::array< std::function< std::string(const LogEvent& log_event) >, message_type_count > m_formatters{};
+        std::array< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > >, message_type_count >
+            m_outputs{&std::cout, &std::cout, &std::cout, &std::cout, &std::cout, &std::cout};
+        std::array< std::function< std::string(const log_event& log_event) >, message_type_count > m_formatters{};
 
         std::atomic< int32_t > m_message_index{0};
         bool m_include_proc_id{false};
