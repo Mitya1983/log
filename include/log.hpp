@@ -9,6 +9,7 @@
 #include <string>
 #include <variant>
 #include <array>
+#include <atomic>
 #include <source_location>
 
 namespace mt::log {
