@@ -12,6 +12,7 @@
 #if defined __cpp_lib_format
   #include <format>
 #endif
+
 using namespace mt::log;
 
 auto mt::log::processID() -> uint64_t {
@@ -58,19 +59,6 @@ LogEvent::LogEvent(const std::string_view p_module,
                    const std::source_location p_source_location) :
     LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, p_source_location) { }
 
-LogEvent::LogEvent(const char* p_module,
-                   const char* p_message,
-                   const MessageType p_message_type,
-                   std::string p_function_name,
-                   std::string p_file_name,
-                   const uint32_t p_line) :
-    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
-
-LogEvent::LogEvent(const char* p_module, const char* p_message, const MessageType p_message_type, const std::source_location p_source_location) :
-    LogEvent(std::string{p_module}, std::string{p_message}, p_message_type, p_source_location) { }
-
-LogEvent::~LogEvent() = default;
-
 auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& formatter) const -> std::string {
     if (formatter) {
         return formatter(*this);
@@ -79,7 +67,12 @@ auto LogEvent::toString(const std::function< std::string(const LogEvent&) >& for
     return std::format("{}|{}|{}|{}|{}|{}|{}\n", time_point, message_type_string, module_name, message, function_name, file_name, line);
 #else
     const auto time = std::chrono::system_clock::to_time_t(time_point);
-    auto tm_struct = *std::gmtime(&time);
+    std::tm tm_struct{};
+#if defined(_WIN32) || defined(_WIN64)
+    gmtime_s(&tm_struct, &time);
+#else
+    gmtime_r(&time, &tm_struct);
+#endif
     std::string string_time = std::to_string(tm_struct.tm_year + 1900);
     string_time += '-';
     string_time += std::to_string(tm_struct.tm_mon + 1);

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 #include <variant>
-#include <vector>
+#include <array>
 #include <source_location>
 
 namespace mt::log {
@@ -28,13 +28,13 @@ namespace mt::log {
         Fatal
     };
 
+    static constexpr uint8_t message_type_count = 6;
+
     struct LogEvent {
         LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
         LogEvent(std::string p_module, std::string p_message, MessageType p_message_type, std::source_location p_source_location);
         LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
         LogEvent(std::string_view p_module, std::string_view p_message, MessageType p_message_type, std::source_location p_source_location);
-        LogEvent(const char* p_module, const char* p_message, MessageType p_message_type, std::string p_function_name, std::string p_file_name, uint32_t p_line);
-        LogEvent(const char* p_module, const char* p_message, MessageType p_message_type, std::source_location p_source_location);
 
         LogEvent(const LogEvent& other) = delete;
         LogEvent(LogEvent&& other) = default;
@@ -42,7 +42,7 @@ namespace mt::log {
         LogEvent& operator=(const LogEvent& other) = delete;
         LogEvent& operator=(LogEvent&& other) = default;
 
-        ~LogEvent();
+        ~LogEvent() = default;
 
         [[nodiscard]] auto toString(const std::function< std::string(const LogEvent&) >& formatter = {}) const -> std::string;
 
@@ -119,23 +119,7 @@ namespace mt::log {
      */
     template < class Mutex = std::mutex > class Log {
     public:
-        Log() {
-            m_message_types.emplace_back("TRACE");
-            m_message_types.emplace_back("DEBUG");
-            m_message_types.emplace_back("ERROR");
-            m_message_types.emplace_back("WARNING");
-            m_message_types.emplace_back("INFO");
-            m_message_types.emplace_back("FATAL");
-
-            m_outputs.emplace_back(&std::cout);
-            m_outputs.emplace_back(&std::cout);
-            m_outputs.emplace_back(&std::cout);
-            m_outputs.emplace_back(&std::cout);
-            m_outputs.emplace_back(&std::cout);
-            m_outputs.emplace_back(&std::cout);
-
-            m_formatters.resize(6);
-        }
+        Log() = default;
 
         Log(const Log&) = delete;
         Log(Log&&) = delete;
@@ -248,7 +232,7 @@ namespace mt::log {
                 return;
             }
 #endif
-            static int32_t message_index{0};
+            auto message_index = m_message_index.fetch_add(1, std::memory_order_relaxed);
             const auto message_type_index = static_cast< uint64_t >(log_event.message_type);
             log_event.message_type_string = m_message_types.at(message_type_index);
             std::string msg;
@@ -256,8 +240,7 @@ namespace mt::log {
                 msg += std::to_string(processID()) + "-";
             }
             msg += std::to_string(message_index) + ": ";
-            if (not m_formatters.empty()) {
-                const auto formatter = m_formatters.at(message_type_index);
+            if (const auto& formatter = m_formatters.at(message_type_index); formatter) {
                 msg += log_event.toString(formatter);
             } else {
                 msg += log_event.toString();
@@ -268,6 +251,7 @@ namespace mt::log {
                     if constexpr (std::is_same_v< T, std::ostream* >) {
                         std::scoped_lock lock(m_mutex);
                         arg->write(msg.data(), std::ssize(msg));
+                        arg->flush();
                     } else if constexpr (std::is_same_v< T, std::filesystem::path >) {
                         std::scoped_lock lock(m_mutex);
                         std::ofstream file(arg, std::ios::app);
@@ -282,7 +266,6 @@ namespace mt::log {
                     }
                 },
                 m_outputs.at(message_type_index));
-            ++message_index;
         }
 
         ~Log() = default;
@@ -290,10 +273,12 @@ namespace mt::log {
     private:
         Mutex m_mutex;
 
-        std::vector< std::string > m_message_types;
-        std::vector< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > > > m_outputs;
-        std::vector< std::function< std::string(const LogEvent& log_event) > > m_formatters;
+        std::array< std::string, message_type_count > m_message_types{"TRACE", "DEBUG", "ERROR", "WARNING", "INFO", "FATAL"};
+        std::array< std::variant< std::monostate, std::ostream*, std::filesystem::path, std::function< void(const std::string&) > >, message_type_count > m_outputs{
+            &std::cout, &std::cout, &std::cout, &std::cout, &std::cout, &std::cout};
+        std::array< std::function< std::string(const LogEvent& log_event) >, message_type_count > m_formatters{};
 
+        std::atomic< int32_t > m_message_index{0};
         bool m_include_proc_id{false};
     };
 
