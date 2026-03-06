@@ -45,20 +45,6 @@ log_event::log_event(std::string p_module, std::string p_message, const enum mes
               p_source_location.file_name(),
               p_source_location.line()) { }
 
-log_event::log_event(const std::string_view p_module,
-                     const std::string_view p_message,
-                     const enum message_type p_message_type,
-                     std::string p_function_name,
-                     std::string p_file_name,
-                     const uint32_t p_line) :
-    log_event(std::string{p_module}, std::string{p_message}, p_message_type, std::move(p_function_name), std::move(p_file_name), p_line) { }
-
-log_event::log_event(const std::string_view p_module,
-                     const std::string_view p_message,
-                     const enum message_type p_message_type,
-                     const std::source_location p_source_location) :
-    log_event(std::string{p_module}, std::string{p_message}, p_message_type, p_source_location) { }
-
 auto log_event::to_string(const std::function< std::string(const log_event&) >& formatter) const -> std::string {
     if (formatter) {
         return formatter(*this);
